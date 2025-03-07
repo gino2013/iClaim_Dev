@@ -1,7 +1,6 @@
 package com.cathay.hospital.controller;
 
 import com.cathay.hospital.exception.BusinessException;
-import com.cathay.hospital.model.ApiResponse;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.service.OffsetCaseService;
@@ -45,63 +44,48 @@ public class OffsetCaseController {
     private OffsetCaseService offsetCaseService;
 
     /**
-     * 案件新增及試算
+     * 新增案件並進行試算
      *
-     * <p>接收案件新增請求，進行必要的檢核後，新增案件並進行試算。
-     * 處理流程包括：
-     * <ol>
-     *   <li>檢核必要欄位</li>
-     *   <li>檢查案件是否存在</li>
-     *   <li>檢查抵繳名單</li>
-     *   <li>新增案件</li>
-     *   <li>進行試算</li>
-     * </ol>
-     *
-     * @param headers HTTP 請求標頭，必須包含 TXNSEQ 和 TENANT_ID
-     * @param request 案件新增請求資料
-     * @return API 響應，包含試算結果或錯誤信息
+     * @param headers HTTP 請求標頭
+     * @param request 案件請求資料
+     * @return 試算結果
      */
     @PostMapping("/add-doc-cal")
-    public ResponseEntity<ApiResponse> addDocumentAndCalculate(
+    public ResponseEntity<?> addDocumentAndCalculate(
             @RequestHeader Map<String, String> headers,
             @RequestBody OffsetCaseRequest request) {
-        log.info("Received headers: {}", headers);
-        log.info("Available header names: {}", headers.keySet());
-        log.info("Received request body: {}", request);
-        
         try {
+            log.info("Received case processing request: {}", request);
             CalculationResult result = offsetCaseService.processCase(headers, request);
-            return ResponseEntity.ok(ApiResponse.success(result));
+            log.info("Case processed successfully");
+            return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             log.error("Business error occurred: {}", e.getMessage());
-            return ResponseEntity.ok(ApiResponse.error(e.getCode(), e.getMessage()));
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             log.error("Unexpected error occurred", e);
-            return ResponseEntity.ok(ApiResponse.error("9999", "系統發生未預期的錯誤"));
+            return ResponseEntity.internalServerError().body("系統錯誤");
         }
     }
 
-    @PostMapping("/process")
-    public ResponseEntity<CalculationResult> processCase(
-            @RequestHeader Map<String, String> headers,
-            @RequestBody OffsetCaseRequest request) {
-        log.info("Received headers: {}", headers);
-        log.info("Received request body: {}", request);
-        log.info("Request fields:");
-        log.info("- organizationId: [{}]", request.getOrganizationId());
-        log.info("- insuredName: [{}]", request.getInsuredName());
-        log.info("- insuredId: [{}]", request.getInsuredId());
-        log.info("- charNo: [{}]", request.getCharNo());
-        log.info("- admissionNo: [{}]", request.getAdmissionNo());
-        log.info("- admissionDate: [{}]", request.getAdmissionDate());
-        log.info("- updateId: [{}]", request.getUpdateId());
-
+    /**
+     * 查詢案件狀態
+     *
+     * @param caseNo 案件編號
+     * @return 案件資訊
+     */
+    @GetMapping("/{caseNo}")
+    public ResponseEntity<?> getCaseStatus(@PathVariable String caseNo) {
         try {
-            CalculationResult result = offsetCaseService.processCase(headers, request);
-            return ResponseEntity.ok(result);
+            log.info("Retrieving case status for case number: {}", caseNo);
+            // TODO: 實作案件狀態查詢
+            return ResponseEntity.ok().build();
         } catch (BusinessException e) {
-            log.error("Business error occurred: {}", e.getMessage(), e);
-            throw e;
+            log.error("Business error occurred while retrieving case status: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error occurred while retrieving case status", e);
+            return ResponseEntity.internalServerError().body("系統錯誤");
         }
     }
 } 

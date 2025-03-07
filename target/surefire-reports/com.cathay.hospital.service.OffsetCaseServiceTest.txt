@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.service.OffsetCaseServiceTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.887 s <<< FAILURE! - in com.cathay.hospital.service.OffsetCaseServiceTest
-com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success  Time elapsed: 0.869 s  <<< ERROR!
-java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@4a41caed] or target class [class com.cathay.hospital.service.OffsetCaseService]
+Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.449 s <<< FAILURE! - in com.cathay.hospital.service.OffsetCaseServiceTest
+com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success  Time elapsed: 0.438 s  <<< ERROR!
+java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@5f9a8ddc] or target class [class com.cathay.hospital.service.OffsetCaseService]
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:190)
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:107)
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:91)
@@ -82,8 +82,8 @@ java.lang.IllegalArgumentException: Could not find field 'documentService' of ty
 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
 
-com.cathay.hospital.service.OffsetCaseServiceTest.processDocuments_Success  Time elapsed: 0.004 s  <<< ERROR!
-java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@615c4ea4] or target class [class com.cathay.hospital.service.OffsetCaseService]
+com.cathay.hospital.service.OffsetCaseServiceTest.processDocuments_Success  Time elapsed: 0.003 s  <<< ERROR!
+java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@31e3c34] or target class [class com.cathay.hospital.service.OffsetCaseService]
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:190)
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:107)
 	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:91)

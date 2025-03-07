@@ -4,7 +4,6 @@ import com.cathay.hospital.constant.ErrorCode;
 import com.cathay.hospital.constant.StatusCode;
 import com.cathay.hospital.entity.OffsetCase;
 import com.cathay.hospital.exception.BusinessException;
-import com.cathay.hospital.model.CaseInfo;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.repository.OffsetCaseRepository;
@@ -27,13 +26,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
 import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.Optional;
+import jakarta.persistence.EntityManager;
+
+import java.util.Arrays;
+
+import org.springframework.core.env.Environment;
 
 /**
  * 抵繳案件服務類
@@ -75,13 +78,22 @@ public class OffsetCaseService {
     private CalculationService calculationService;
     
     @Value("${app.environment}")
-    private String environment;
+    private String appEnvironment;
 
     @Autowired
     private OffsetCaseRepository offsetCaseRepository;
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Value("${spring.datasource.url}")
+    private String datasourceUrl;
+
+    @Autowired
+    private Environment environment;
 
     @PostConstruct
     public void testConnection() {
@@ -93,6 +105,13 @@ public class OffsetCaseService {
         }
     }
 
+    @PostConstruct
+    public void checkConfiguration() {
+        log.info("Datasource URL from configuration: {}", datasourceUrl);
+        log.info("App environment: {}", appEnvironment);
+        log.info("Active profiles: {}", Arrays.toString(environment.getActiveProfiles()));
+    }
+
     /**
      * 處理抵繳案件的主要方法
      *
@@ -101,7 +120,7 @@ public class OffsetCaseService {
      * @return 試算結果
      * @throws BusinessException 當業務邏輯檢核失敗時
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CalculationResult processCase(Map<String, String> headers, OffsetCaseRequest request) {
         try {
             // 检查数据库状态
@@ -135,8 +154,9 @@ public class OffsetCaseService {
                 }
             }
 
-            // 7. 保存案件
+            // 7. 保存案件並立即刷新
             saveCase(caseNo, ctTenantId, request);
+            entityManager.flush();
 
             // 8. 调用试算服务
             return calculationService.calculate(caseNo, request);
@@ -202,7 +222,7 @@ public class OffsetCaseService {
      * @return 環境設定值
      */
     private String getEnvironment() {
-        return environment;
+        return appEnvironment;
     }
 
     /**
@@ -688,7 +708,7 @@ public class OffsetCaseService {
      * 保存案件
      */
     private void saveCase(String caseNo, String ctTenantId, OffsetCaseRequest request) {
-        log.info("Saving new case - caseNo: {}, admissionNo: {}", caseNo, request.getAdmissionNo());
+        log.info("Starting to save case - caseNo: {}, admissionNo: {}", caseNo, request.getAdmissionNo());
         
         try {
             OffsetCase offsetCase = new OffsetCase();
@@ -702,19 +722,76 @@ public class OffsetCaseService {
             offsetCase.setAdmissionDate(LocalDate.parse(request.getAdmissionDate()));
             offsetCase.setUpdateId(request.getUpdateId());
             offsetCase.setUpdateTime(LocalDateTime.now());
+            offsetCase.setUpdateTenant(ctTenantId);
             offsetCase.setStatusCode(StatusCode.INIT.getCode());
+            offsetCase.setCaseDate(LocalDateTime.now());
+            offsetCase.setCaseType("O");
+
+            // 在保存前檢查所有必要欄位
+            validateOffsetCase(offsetCase);
             
-            offsetCaseRepository.save(offsetCase);
-            log.info("Successfully saved case: {}", caseNo);
+            log.info("Prepared case entity for saving: {}", offsetCase);
             
-            // 验证保存是否成功
-            boolean exists = offsetCaseRepository.existsById(caseNo);
-            log.info("Verified case exists in database: {}", exists);
+            // 使用 JdbcTemplate 直接插入
+            String sql = """
+                INSERT INTO public.offset_case (
+                    case_no, ct_tenant_id, admission_no, insured_id, 
+                    insured_name, organization_id, char_no, admission_date,
+                    update_id, update_time, update_tenant, status_code, 
+                    case_date, case_type
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+            
+            jdbcTemplate.update(sql,
+                offsetCase.getCaseNo(),
+                offsetCase.getCtTenantId(),
+                offsetCase.getAdmissionNo(),
+                offsetCase.getInsuredId(),
+                offsetCase.getInsuredName(),
+                offsetCase.getOrganizationId(),
+                offsetCase.getCharNo(),
+                offsetCase.getAdmissionDate(),
+                offsetCase.getUpdateId(),
+                offsetCase.getUpdateTime(),
+                offsetCase.getUpdateTenant(),
+                offsetCase.getStatusCode(),
+                offsetCase.getCaseDate(),
+                offsetCase.getCaseType()
+            );
+            
+            log.info("Successfully inserted case using JDBC");
+            
+            // 驗證插入是否成功
+            String checkSql = "SELECT COUNT(*) FROM public.offset_case WHERE case_no = ?";
+            Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, caseNo);
+            
+            if (count == null || count == 0) {
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "案件保存失敗 - 資料未成功寫入");
+            }
+            
+            log.info("Successfully verified case in database");
             
         } catch (Exception e) {
-            log.error("Error saving case: {}", e.getMessage());
-            log.error("Case details - caseNo: {}, admissionNo: {}", caseNo, request.getAdmissionNo());
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存案件失败", e);
+            log.error("Error saving case: ", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存案件失敗: " + e.getMessage());
+        }
+    }
+
+    private void validateOffsetCase(OffsetCase offsetCase) {
+        List<String> missingFields = new ArrayList<>();
+        
+        if (offsetCase.getCaseNo() == null) missingFields.add("caseNo");
+        if (offsetCase.getCtTenantId() == null) missingFields.add("ctTenantId");
+        if (offsetCase.getAdmissionNo() == null) missingFields.add("admissionNo");
+        if (offsetCase.getStatusCode() == null) missingFields.add("statusCode");
+        if (offsetCase.getUpdateId() == null) missingFields.add("updateId");
+        if (offsetCase.getUpdateTime() == null) missingFields.add("updateTime");
+        if (offsetCase.getUpdateTenant() == null) missingFields.add("updateTenant");
+        
+        if (!missingFields.isEmpty()) {
+            String errorMsg = "必要欄位缺失: " + String.join(", ", missingFields);
+            log.error(errorMsg);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, errorMsg);
         }
     }
 

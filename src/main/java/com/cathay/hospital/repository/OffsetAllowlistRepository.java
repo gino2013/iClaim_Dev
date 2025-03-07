@@ -37,4 +37,6 @@ public interface OffsetAllowlistRepository extends JpaRepository<OffsetAllowlist
      * @return true 如果在名單中，否則返回 false
      */
     boolean existsByInsuredIdAndCtTenantId(String insuredId, String ctTenantId);
+
+    boolean existsByCtTenantIdAndInsuredId(String ctTenantId, String insuredId);
 } 

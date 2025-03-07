@@ -1,15 +1,14 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.controller.OffsetCaseControllerTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 6.408 s <<< FAILURE! - in com.cathay.hospital.controller.OffsetCaseControllerTest
-com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest  Time elapsed: 0.427 s  <<< FAILURE!
-java.lang.AssertionError: JSON path "$.returnData.calculatedAmount" expected:<1000.00> but was:<1000.0>
-	at org.springframework.test.util.AssertionErrors.fail(AssertionErrors.java:59)
-	at org.springframework.test.util.AssertionErrors.assertEquals(AssertionErrors.java:122)
-	at org.springframework.test.util.JsonPathExpectationsHelper.assertValue(JsonPathExpectationsHelper.java:123)
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 4.122 s <<< FAILURE! - in com.cathay.hospital.controller.OffsetCaseControllerTest
+com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest  Time elapsed: 0.36 s  <<< FAILURE!
+java.lang.AssertionError: No value at JSON path "$.returnCode"
+	at org.springframework.test.util.JsonPathExpectationsHelper.evaluateJsonPath(JsonPathExpectationsHelper.java:302)
+	at org.springframework.test.util.JsonPathExpectationsHelper.assertValue(JsonPathExpectationsHelper.java:99)
 	at org.springframework.test.web.servlet.result.JsonPathResultMatchers.lambda$value$2(JsonPathResultMatchers.java:111)
 	at org.springframework.test.web.servlet.MockMvc$1.andExpect(MockMvc.java:214)
-	at com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest(OffsetCaseControllerTest.java:56)
+	at com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest(OffsetCaseControllerTest.java:55)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:727)
@@ -79,4 +78,5 @@ java.lang.AssertionError: JSON path "$.returnData.calculatedAmount" expected:<10
 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+Caused by: com.jayway.jsonpath.PathNotFoundException: No results for path: $['returnCode']
 

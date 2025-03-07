@@ -3,6 +3,7 @@ package com.cathay.hospital.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
+import lombok.Data;
 
 /**
  * 抵繳案件實體類
@@ -31,11 +32,12 @@ import java.time.LocalDate;
  * @since 2025-03-06
  */
 @Entity
-@Table(name = "offset_case")
+@Table(name = "offset_case", schema = "public")
+@Data
 public class OffsetCase {
     /** 案件編號 (主鍵) */
     @Id
-    @Column(name = "CASE_NO")
+    @Column(name = "case_no")
     private String caseNo;
     
     /** 案件日期 */
@@ -47,26 +49,26 @@ public class OffsetCase {
     private String caseType;
     
     /** 機構代碼 */
-    @Column(name = "ORGANIZATION_ID")
+    @Column(name = "organization_id")
     private String organizationId;
     
     /** 國泰人壽租戶代碼 */
-    @Column(name = "CT_TENANT_ID") 
+    @Column(name = "ct_tenant_id")
     private String ctTenantId;
     
-    @Column(name = "INSURED_NAME")
+    @Column(name = "insured_name")
     private String insuredName;
     
-    @Column(name = "INSURED_ID")
+    @Column(name = "insured_id")
     private String insuredId;
     
-    @Column(name = "CHAR_NO")
+    @Column(name = "char_no")
     private String charNo;
     
-    @Column(name = "ADMISSION_NO")
+    @Column(name = "admission_no")
     private String admissionNo;
     
-    @Column(name = "ADMISSION_DATE")
+    @Column(name = "admission_date")
     private LocalDate admissionDate;
     
     @Column(name = "SEND_DATE")
@@ -78,16 +80,16 @@ public class OffsetCase {
     @Column(name = "AUTH_AGREEMENT")
     private String authAgreement;
     
-    @Column(name = "STATUS_CODE")
+    @Column(name = "status_code")
     private String statusCode;
     
-    @Column(name = "UPDATE_ID")
+    @Column(name = "update_id")
     private String updateId;
     
     @Column(name = "UPDATE_TENANT")
     private String updateTenant;
     
-    @Column(name = "UPDATE_TIME")
+    @Column(name = "update_time")
     private LocalDateTime updateTime;
 
     // Getters
