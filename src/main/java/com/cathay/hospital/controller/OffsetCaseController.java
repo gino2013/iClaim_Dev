@@ -4,13 +4,12 @@ import com.cathay.hospital.exception.BusinessException;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.service.OffsetCaseService;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -63,13 +62,24 @@ public class OffsetCaseController {
             log.info("Received case processing request: {}", request);
             CalculationResult result = offsetCaseService.processCase(headers, request);
             log.info("Case processed successfully");
-            return ResponseEntity.ok(result);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("returnCode", "0000");
+            response.put("returnData", result);
+            
+            return ResponseEntity.ok(response);
         } catch (BusinessException e) {
             log.error("Business error occurred: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("returnCode", e.getCode());
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         } catch (Exception e) {
             log.error("Unexpected error occurred", e);
-            return ResponseEntity.internalServerError().body("系統錯誤");
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("returnCode", "9999");
+            errorResponse.put("message", "系統錯誤");
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 

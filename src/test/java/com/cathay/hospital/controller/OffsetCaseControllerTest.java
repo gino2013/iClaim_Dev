@@ -36,12 +36,13 @@ class OffsetCaseControllerTest {
         request.setInsuredId("A123456789");
         request.setDocument("base64EncodedDocument");
         request.setPolicyNo("POL001");
-        request.setInsuredName("测试");
+        request.setInsuredName("測試");
         request.setOffsetAmount(new BigDecimal("1000.00"));
         
         CalculationResult expectedResult = CalculationResult.builder()
+            .caseNo("TEST001")
             .calculatedAmount(new BigDecimal("1000.00"))
-            .calculationReason("正常试算")
+            .calculationReason("正常計算")
             .build();
             
         when(offsetCaseService.processCase(any(), any())).thenReturn(expectedResult);

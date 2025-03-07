@@ -1,23 +1,12 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.service.OffsetCaseServiceTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 2, Skipped: 0, Time elapsed: 0.646 s <<< FAILURE! -- in com.cathay.hospital.service.OffsetCaseServiceTest
-com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success -- Time elapsed: 0.639 s <<< ERROR!
-java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@720ffab4] or target class [class com.cathay.hospital.service.OffsetCaseService]
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:192)
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:108)
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:92)
-	at com.cathay.hospital.service.OffsetCaseServiceTest.setUp(OffsetCaseServiceTest.java:47)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-
-com.cathay.hospital.service.OffsetCaseServiceTest.processDocuments_Success -- Time elapsed: 0.003 s <<< ERROR!
-java.lang.IllegalArgumentException: Could not find field 'documentService' of type [null] on target object [com.cathay.hospital.service.OffsetCaseService@74450c9b] or target class [class com.cathay.hospital.service.OffsetCaseService]
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:192)
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:108)
-	at org.springframework.test.util.ReflectionTestUtils.setField(ReflectionTestUtils.java:92)
-	at com.cathay.hospital.service.OffsetCaseServiceTest.setUp(OffsetCaseServiceTest.java:47)
+Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 1.275 s <<< FAILURE! -- in com.cathay.hospital.service.OffsetCaseServiceTest
+com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success -- Time elapsed: 1.250 s <<< ERROR!
+com.cathay.hospital.exception.BusinessException: 必填字段缺失: organizationId, charNo, admissionDate, updateId
+	at com.cathay.hospital.service.OffsetCaseService.validateRequest(OffsetCaseService.java:230)
+	at com.cathay.hospital.service.OffsetCaseService.processCase(OffsetCaseService.java:133)
+	at com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success(OffsetCaseServiceTest.java:145)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)

@@ -8,17 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Primary;
 import java.math.BigDecimal;
 
-@Service()
+@Service
+@Primary
 public class CalculationServiceImpl implements CalculationService {
     private static final Logger log = LoggerFactory.getLogger(CalculationServiceImpl.class);
     
-    @Value("${external.api.calculation.url}")
-    private String calculationUrl;
-    
     @Value("${spring.profiles.active:}")
-    private String activeProfile;  // 注入当前激活的 profile
+    private String activeProfile;
     
     // private final RestTemplate restTemplate;
     
@@ -27,25 +26,29 @@ public class CalculationServiceImpl implements CalculationService {
     // }
     
     /**
-     * 调用试算服务
-     * @param caseNo 案件编号
-     * @param request 试算请求
-     * @return 试算结果
+     * 調用試算服務
+     * @param caseNo 案件編號
+     * @param request 試算請求
+     * @return 試算結果
      */
     @Override
     public CalculationResult calculate(String caseNo, OffsetCaseRequest request) {
-        // 在开发环境返回模拟数据
+        log.info("Calculating for case: {}", caseNo);
+        
+        // 在開發環境返回模擬資料
         if ("dev".equals(activeProfile)) {
             return CalculationResult.builder()
+                    .caseNo(caseNo)
                     .calculatedAmount(new BigDecimal("1000.00"))
-                    .calculationReason("模拟计算结果")
+                    .calculationReason("模擬計算結果")
                     .build();
         }
         
-        // 实际计算逻辑
+        // 實際計算邏輯
         return CalculationResult.builder()
+                .caseNo(caseNo)
                 .calculatedAmount(new BigDecimal("500.00"))
-                .calculationReason("正常计算")
+                .calculationReason("正常計算")
                 .build();
     }
 } 

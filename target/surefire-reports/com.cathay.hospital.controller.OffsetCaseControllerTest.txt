@@ -1,16 +1,16 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.controller.OffsetCaseControllerTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 4.388 s <<< FAILURE! -- in com.cathay.hospital.controller.OffsetCaseControllerTest
-com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest -- Time elapsed: 0.497 s <<< FAILURE!
-java.lang.AssertionError: No value at JSON path "$.returnCode"
-	at org.springframework.test.util.JsonPathExpectationsHelper.evaluateJsonPath(JsonPathExpectationsHelper.java:351)
-	at org.springframework.test.util.JsonPathExpectationsHelper.assertValue(JsonPathExpectationsHelper.java:148)
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 6.388 s <<< FAILURE! -- in com.cathay.hospital.controller.OffsetCaseControllerTest
+com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest -- Time elapsed: 0.401 s <<< FAILURE!
+java.lang.AssertionError: JSON path "$.returnData.calculatedAmount" expected:<1000.00> but was:<1000.0>
+	at org.springframework.test.util.AssertionErrors.fail(AssertionErrors.java:61)
+	at org.springframework.test.util.AssertionErrors.assertEquals(AssertionErrors.java:128)
+	at org.springframework.test.util.JsonPathExpectationsHelper.assertValue(JsonPathExpectationsHelper.java:172)
 	at org.springframework.test.web.servlet.result.JsonPathResultMatchers.lambda$value$2(JsonPathResultMatchers.java:112)
 	at org.springframework.test.web.servlet.MockMvc$1.andExpect(MockMvc.java:214)
-	at com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest(OffsetCaseControllerTest.java:55)
+	at com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest(OffsetCaseControllerTest.java:57)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
 	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-Caused by: com.jayway.jsonpath.PathNotFoundException: No results for path: $['returnCode']
 

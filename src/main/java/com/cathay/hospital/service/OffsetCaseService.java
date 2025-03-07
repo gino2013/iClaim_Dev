@@ -73,21 +73,24 @@ import org.springframework.core.env.Environment;
 public class OffsetCaseService {
     private static final Logger log = LoggerFactory.getLogger(OffsetCaseService.class);
 
-    @Autowired
-    @Qualifier("calculationServiceImpl")
-    private CalculationService calculationService;
-    
+    private final OffsetCaseRepository caseRepository;
+    private final JdbcTemplate jdbcTemplate;
+    private final EntityManager entityManager;
+    private final CalculationService calculationService;
+
+    public OffsetCaseService(
+            OffsetCaseRepository caseRepository,
+            JdbcTemplate jdbcTemplate,
+            EntityManager entityManager,
+            @Qualifier("calculationServiceImpl") CalculationService calculationService) {
+        this.caseRepository = caseRepository;
+        this.jdbcTemplate = jdbcTemplate;
+        this.entityManager = entityManager;
+        this.calculationService = calculationService;
+    }
+
     @Value("${app.environment}")
     private String appEnvironment;
-
-    @Autowired
-    private OffsetCaseRepository offsetCaseRepository;
-    
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private EntityManager entityManager;
 
     @Value("${spring.datasource.url}")
     private String datasourceUrl;

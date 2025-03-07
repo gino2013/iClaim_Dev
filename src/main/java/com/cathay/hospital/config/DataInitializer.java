@@ -174,27 +174,27 @@ public class DataInitializer implements CommandLineRunner {
             List<Map<String, Object>> privileges = jdbcTemplate.queryForList(sql);
             log.info("Table privileges: {}", privileges);
             
-            // 嘗試插入測試數據
-            String testSql = """
-                INSERT INTO public.offset_case (
-                    case_no, admission_no, status_code, ct_tenant_id, 
-                    update_id, update_time, case_date, case_type,
-                    update_tenant
-                ) VALUES (
-                    'TEST_' || NOW()::TEXT, 'TEST_ADM', 'INI', 'TEST', 
-                    'SYSTEM', NOW(), NOW(), 'O', 'TEST'
-                )
-            """;
-            jdbcTemplate.execute(testSql);
-            log.info("Test insert successful");
+            // // 嘗試插入測試數據
+            // String testSql = """
+            //     INSERT INTO public.offset_case (
+            //         case_no, admission_no, status_code, ct_tenant_id, 
+            //         update_id, update_time, case_date, case_type,
+            //         update_tenant
+            //     ) VALUES (
+            //         'TEST_' || NOW()::TEXT, 'TEST_ADM', 'INI', 'TEST', 
+            //         'SYSTEM', NOW(), NOW(), 'O', 'TEST'
+            //     )
+            // """;
+            // jdbcTemplate.execute(testSql);
+            // log.info("Test insert successful");
             
-            // 清理測試數據
-            String cleanupSql = """
-                DELETE FROM public.offset_case 
-                WHERE case_no LIKE 'TEST_%'
-            """;
-            jdbcTemplate.execute(cleanupSql);
-            log.info("Test data cleaned up");
+            // // 清理測試數據
+            // String cleanupSql = """
+            //     DELETE FROM public.offset_case 
+            //     WHERE case_no LIKE 'TEST_%'
+            // """;
+            // jdbcTemplate.execute(cleanupSql);
+            // log.info("Test data cleaned up");
             
         } catch (Exception e) {
             log.error("Database access check failed", e);

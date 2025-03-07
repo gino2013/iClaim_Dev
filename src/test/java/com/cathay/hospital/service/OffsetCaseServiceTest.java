@@ -2,8 +2,10 @@ package com.cathay.hospital.service;
 
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
+import com.cathay.hospital.repository.OffsetCaseRepository;
 import com.cathay.hospital.service.external.CalculationService;
 import com.cathay.hospital.service.external.DocumentService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,31 +23,36 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OffsetCaseServiceTest {
 
     @Mock
+    private OffsetCaseRepository caseRepository;
+
+    @Mock
     private JdbcTemplate jdbcTemplate;
 
     @Mock
-    @Qualifier("mockCalculationServiceImpl")
-    private CalculationService calculationService;
+    private EntityManager entityManager;
 
     @Mock
-    private DocumentService documentService;
+    private CalculationService calculationService;
 
     private OffsetCaseService offsetCaseService;
 
     @BeforeEach
     void setUp() {
-        offsetCaseService = new OffsetCaseService();
-        ReflectionTestUtils.setField(offsetCaseService, "jdbcTemplate", jdbcTemplate);
-        ReflectionTestUtils.setField(offsetCaseService, "calculationService", calculationService);
-        ReflectionTestUtils.setField(offsetCaseService, "documentService", documentService);
-        ReflectionTestUtils.setField(offsetCaseService, "environment", "UT");
+        offsetCaseService = new OffsetCaseService(
+            caseRepository,      // 使用建構子注入
+            jdbcTemplate,
+            entityManager,
+            calculationService
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -94,35 +101,42 @@ class OffsetCaseServiceTest {
         // Arrange
         Map<String, String> headers = new HashMap<>();
         headers.put("TENANT_ID", "TEST");
-        headers.put("TXNSEQ", "123456");
         
         OffsetCaseRequest request = new OffsetCaseRequest();
         request.setAdmissionNo("ADM001");
         request.setInsuredId("A123456789");
         request.setDocument("base64EncodedDocument");
         request.setPolicyNo("POL001");
-        request.setInsuredName("测试");
+        request.setInsuredName("測試");
         request.setOffsetAmount(new BigDecimal("1000.00"));
-        request.setOrganizationId("ORG001");
-        request.setCharNo("CHAR001");
-        request.setAdmissionDate("2025-03-07");
-        request.setUpdateId("USER001");
+        
+        // Mock 數據庫檢查相關的查詢
+        when(jdbcTemplate.queryForObject(
+            eq("SELECT current_database()"), 
+            eq(String.class)
+        )).thenReturn("test_db");
         
         when(jdbcTemplate.queryForObject(
-            any(String.class), 
-            eq(String.class), 
-            any(Object[].class)
-        )).thenReturn("TEST_TENANT");
-            
+            contains("SELECT EXISTS"), 
+            eq(Boolean.class)
+        )).thenReturn(true);
+        
         when(jdbcTemplate.queryForObject(
-            any(String.class), 
+            eq("SELECT COUNT(*) FROM public.offset_case"), 
+            eq(Integer.class)
+        )).thenReturn(0);
+        
+        // Mock 其他必要的數據庫操作
+        when(jdbcTemplate.queryForObject(
+            anyString(), 
             eq(Integer.class), 
             any(Object[].class)
-        )).thenReturn(0);  // Case not exists
-            
+        )).thenReturn(0);  // 假設案件不存在
+        
         CalculationResult expectedResult = CalculationResult.builder()
+            .caseNo("TEST001")
             .calculatedAmount(new BigDecimal("1000.00"))
-            .calculationReason("正常试算")
+            .calculationReason("正常計算")
             .build();
             
         when(calculationService.calculate(any(), any())).thenReturn(expectedResult);
@@ -133,6 +147,6 @@ class OffsetCaseServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(new BigDecimal("1000.00"), result.getCalculatedAmount());
-        assertEquals("正常试算", result.getCalculationReason());
+        assertEquals("正常計算", result.getCalculationReason());
     }
 } 

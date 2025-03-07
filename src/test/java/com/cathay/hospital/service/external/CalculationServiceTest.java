@@ -40,6 +40,7 @@ class CalculationServiceTest {
         assertNotNull(result);
         assertEquals(new BigDecimal("1000.00"), result.getCalculatedAmount());
         assertEquals("模擬計算結果", result.getCalculationReason());
+        assertEquals(caseNo, result.getCaseNo());
     }
 
     @Test
@@ -56,5 +57,6 @@ class CalculationServiceTest {
         assertNotNull(result);
         assertEquals(new BigDecimal("500.00"), result.getCalculatedAmount());
         assertEquals("正常計算", result.getCalculationReason());
+        assertEquals(caseNo, result.getCaseNo());
     }
 } 
