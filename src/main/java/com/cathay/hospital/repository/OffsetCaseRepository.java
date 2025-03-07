@@ -42,6 +42,8 @@ public interface OffsetCaseRepository extends JpaRepository<OffsetCase, String> 
     @Query("SELECT o FROM OffsetCase o WHERE o.admissionNo = :admissionNo AND o.ctTenantId = :ctTenantId ORDER BY o.updateTime DESC")
     Optional<OffsetCase> findLatestByAdmissionNoAndCtTenantId(String admissionNo, String ctTenantId);
     
-    @Query("SELECT COUNT(o) FROM OffsetCase o WHERE DATE(o.caseDate) = CURRENT_DATE")
+    @Query("SELECT COUNT(c) FROM OffsetCase c WHERE CAST(c.caseDate AS date) = CURRENT_DATE")
     long countTodayCases();
+
+    boolean existsById(String caseNo);
 } 

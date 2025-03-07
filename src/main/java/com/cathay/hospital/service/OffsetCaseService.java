@@ -159,7 +159,19 @@ public class OffsetCaseService {
             entityManager.flush();
 
             // 8. 调用试算服务
-            return calculationService.calculate(caseNo, request);
+            CalculationResult calculationResult = calculationService.calculate(caseNo, request);
+            
+            // 写入试算历程
+            insertCalculationHistory(
+                caseNo, 
+                1, 
+                calculationResult.getCalculatedAmount(), 
+                calculationResult.getCalculationReason(),
+                request.getUpdateId(), 
+                ctTenantId
+            );
+
+            return calculationResult;
 
         } catch (BusinessException e) {
             log.error("Business error occurred while processing case", e);
@@ -428,14 +440,15 @@ public class OffsetCaseService {
         List<String> missingFields = new ArrayList<>();
         for (String field : requiredFields) {
             if (input.get(field) == null || input.get(field).toString().trim().isEmpty()) {
-                missingFields.add(field);
+                throw new RuntimeException("0001:输入栏位缺漏或格式有误");
+//                missingFields.add(field);
             }
         }
 
-        if (!missingFields.isEmpty()) {
-            log.error("Missing required fields: {}", missingFields);
-            throw new RuntimeException("0001:输入栏位缺漏或格式有误");
-        }
+//        if (!missingFields.isEmpty()) {
+//            log.error("Missing required fields: {}", missingFields);
+//            throw new RuntimeException("0001:输入栏位缺漏或格式有误");
+//        }
     }
 
     /**

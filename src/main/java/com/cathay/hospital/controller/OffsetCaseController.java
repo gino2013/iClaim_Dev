@@ -4,6 +4,7 @@ import com.cathay.hospital.exception.BusinessException;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.service.OffsetCaseService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,13 +36,17 @@ import java.util.Map;
  * @version 1.0
  * @since 2025-03-06
  */
+//@RequiredArgsConstructor
 @RestController
 @RequestMapping("/v1/case")
 public class OffsetCaseController {
     private static final Logger log = LoggerFactory.getLogger(OffsetCaseController.class);
 
-    @Autowired
-    private OffsetCaseService offsetCaseService;
+    public OffsetCaseController( OffsetCaseService offsetCaseService){
+        this.offsetCaseService = offsetCaseService;
+    }
+//    @Autowired
+    private final OffsetCaseService offsetCaseService;
 
     /**
      * 新增案件並進行試算

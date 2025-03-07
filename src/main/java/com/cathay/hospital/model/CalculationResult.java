@@ -21,46 +21,54 @@ import java.math.BigDecimal;
  * @since 2025-03-06
  */
 public class CalculationResult {
-    /** 試算金額 */
-    private BigDecimal calculatedAmount;
-    
-    /** 試算原因 */
-    private String calculationReason;
-    
+    private String caseNo;                  // 案件編號
+    private BigDecimal calculatedAmount;    // 試算金額
+    private String calculationReason;       // 試算原因
+
     private CalculationResult(Builder builder) {
+        this.caseNo = builder.caseNo;
         this.calculatedAmount = builder.calculatedAmount;
         this.calculationReason = builder.calculationReason;
     }
-    
+
     public static Builder builder() {
         return new Builder();
     }
-    
+
+    public String getCaseNo() {
+        return caseNo;
+    }
+
+    public BigDecimal getCalculatedAmount() {
+        return calculatedAmount;
+    }
+
+    public String getCalculationReason() {
+        return calculationReason;
+    }
+
     public static class Builder {
+        private String caseNo;
         private BigDecimal calculatedAmount;
         private String calculationReason;
-        
+
+        public Builder caseNo(String caseNo) {
+            this.caseNo = caseNo;
+            return this;
+        }
+
         public Builder calculatedAmount(BigDecimal calculatedAmount) {
             this.calculatedAmount = calculatedAmount;
             return this;
         }
-        
+
         public Builder calculationReason(String calculationReason) {
             this.calculationReason = calculationReason;
             return this;
         }
-        
+
         public CalculationResult build() {
             return new CalculationResult(this);
         }
-    }
-    
-    // Getters
-    public BigDecimal getCalculatedAmount() {
-        return calculatedAmount;
-    }
-    
-    public String getCalculationReason() {
-        return calculationReason;
     }
 } 

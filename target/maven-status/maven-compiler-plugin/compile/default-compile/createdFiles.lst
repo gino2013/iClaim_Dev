@@ -18,10 +18,8 @@ com/cathay/hospital/model/CaseInfo$Builder.class
 com/cathay/hospital/config/DataInitializer.class
 com/cathay/hospital/model/OffsetCaseRequest$OffsetCaseRequestBuilderImpl.class
 com/cathay/hospital/model/OffsetCaseRequest.class
-com/cathay/hospital/config/RestTemplateConfig.class
 com/cathay/hospital/repository/OffsetCaseRepository.class
 com/cathay/hospital/OffsetApplication.class
-com/cathay/hospital/service/external/CalculationServiceImpl.class
 com/cathay/hospital/service/external/mock/MockGipServiceImpl.class
 com/cathay/hospital/entity/OffsetCase.class
 com/cathay/hospital/service/external/GipService.class

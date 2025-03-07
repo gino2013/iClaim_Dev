@@ -2,38 +2,27 @@ package com.cathay.hospital.service.external;
 
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
+import com.cathay.hospital.service.external.impl.CalculationServiceImpl;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestTemplate;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CalculationServiceTest {
-
-    @Mock
-    private RestTemplate restTemplate;
 
     private CalculationService calculationService;
 
     @BeforeEach
     void setUp() {
-        calculationService = new CalculationServiceImpl(restTemplate);
-        ReflectionTestUtils.setField(calculationService, "calculationUrl", "http://test-url");
+        calculationService = new CalculationServiceImpl();
+        ReflectionTestUtils.setField(calculationService, "activeProfile", "dev");
     }
 
     @Test
@@ -41,23 +30,8 @@ class CalculationServiceTest {
         // Arrange
         String caseNo = "TEST001";
         OffsetCaseRequest request = new OffsetCaseRequest();
-        List<Map<String, String>> documents = new ArrayList<>();
-        Map<String, String> doc = new HashMap<>();
-        doc.put("xPaperSeq", "001");
-        doc.put("xBatchId", "BATCH001");
-        documents.add(doc);
-        request.setDocuments(documents);
-
-        CalculationResult expectedResponse = CalculationResult.builder()
-            .calculatedAmount(new BigDecimal("1000.00"))
-            .calculationReason("正常试算")
-            .build();
-
-        when(restTemplate.postForObject(
-            eq("http://test-url"),
-            any(HttpEntity.class),
-            eq(CalculationResult.class)
-        )).thenReturn(expectedResponse);
+        request.setInsuredId("A123456789");
+        request.setInsuredName("測試姓名");
 
         // Act
         CalculationResult result = calculationService.calculate(caseNo, request);
@@ -65,26 +39,22 @@ class CalculationServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(new BigDecimal("1000.00"), result.getCalculatedAmount());
-        assertEquals("正常试算", result.getCalculationReason());
+        assertEquals("模擬計算結果", result.getCalculationReason());
     }
 
     @Test
-    void calculate_ServiceError() {
+    void calculate_ProductionEnvironment() {
         // Arrange
         String caseNo = "TEST001";
         OffsetCaseRequest request = new OffsetCaseRequest();
+        ReflectionTestUtils.setField(calculationService, "activeProfile", "prod");
 
-        when(restTemplate.postForObject(
-            eq("http://test-url"),
-            any(HttpEntity.class),
-            eq(CalculationResult.class)
-        )).thenThrow(new RuntimeException("Service unavailable"));
+        // Act
+        CalculationResult result = calculationService.calculate(caseNo, request);
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> 
-            calculationService.calculate(caseNo, request)
-        );
-
-        assertEquals("0005:试算服务调用失败", exception.getMessage());
+        // Assert
+        assertNotNull(result);
+        assertEquals(new BigDecimal("500.00"), result.getCalculatedAmount());
+        assertEquals("正常計算", result.getCalculationReason());
     }
 } 

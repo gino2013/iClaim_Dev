@@ -38,16 +38,17 @@ public class OffsetApplication {
     
     @Autowired
     private Environment springEnv;
-    
-    @PostConstruct
-    public void init() {
-        String env = springEnv.getProperty("app.environment");
-        log.info("Application Environment: '{}', length: {}", 
-            env, env != null ? env.length() : 0);
-        if (env != null) {
-            log.info("Environment bytes: {}", env.getBytes());
-        }
-    }
+
+    // 不要這樣搞
+//    @PostConstruct
+//    public void init() {
+//        String env = springEnv.getProperty("app.environment");
+//        log.info("Application Environment: '{}', length: {}",
+//            env, env != null ? env.length() : 0);
+//        if (env != null) {
+//            log.info("Environment bytes: {}", env.getBytes());
+//        }
+//    }
 
     /**
      * 應用程式主入口點

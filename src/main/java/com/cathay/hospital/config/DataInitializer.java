@@ -79,6 +79,11 @@ public class DataInitializer implements CommandLineRunner {
                 testCase.setUpdateTime(LocalDateTime.now());
                 testCase.setCaseDate(LocalDateTime.now());
                 testCase.setCaseType("O");
+                testCase.setOrganizationId("ORG001");
+                testCase.setUpdateTenant("ct-03374707-ytzw8");
+                testCase.setInsuredId("A123456789");
+                testCase.setInsuredName("測試姓名");
+                testCase.setCharNo("CHAR001");
                 caseRepository.save(testCase);
                 log.info("Successfully initialized case data");
             }
