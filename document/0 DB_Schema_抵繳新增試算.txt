@@ -1,0 +1,435 @@
+
+CREATE TABLE public.offset_case (
+	case_no varchar(20) NOT NULL, -- 案件編號
+	case_date date NOT NULL, -- 申請日期
+	case_type varchar(1) NOT NULL, -- 案件類型
+	organization_id varchar(50) NOT NULL, -- 醫事機構代碼
+	ct_tenant_id varchar(50) NOT NULL, -- 保險租戶代碼
+	insured_name varchar(50) NOT NULL, -- 被保險人姓名
+	insured_id varchar(50) NOT NULL, -- 被保險人身分證字號
+	char_no varchar(50) NOT NULL, -- 病歷號碼
+	admission_no varchar(50) NOT NULL, -- 住院號
+	admission_date date NOT NULL, -- 住院日期
+	send_date timestamp NULL, -- 傳輸日期時間
+	calculated_amount numeric NULL, -- 試算金額
+	pay_date date NULL, -- 繳費日期
+	act_offset_amount numeric NULL, -- 實際抵繳金額
+	offset_date timestamp NULL, -- 抵繳日期時間
+	close_date date NULL, -- 結案日期
+	status_code varchar(3) NOT NULL, -- 案件狀態
+	stop_status varchar(3) NULL, -- 終止時狀態
+	reject_reason varchar(200) NULL, -- 終止原因
+	auth_agreement text NULL, -- 授權同意書
+	update_id varchar(50) NOT NULL, -- 更新人員
+	update_tenant varchar(50) NOT NULL, -- 更新租戶
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT offset_case_pk PRIMARY KEY (case_no)
+);
+COMMENT ON TABLE public.offset_case IS '抵繳案件主檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.offset_case.case_no IS '案件編號';
+COMMENT ON COLUMN public.offset_case.case_date IS '申請日期';
+COMMENT ON COLUMN public.offset_case.case_type IS '案件類型';
+COMMENT ON COLUMN public.offset_case.organization_id IS '醫事機構代碼';
+COMMENT ON COLUMN public.offset_case.ct_tenant_id IS '保險租戶代碼';
+COMMENT ON COLUMN public.offset_case.insured_name IS '被保險人姓名';
+COMMENT ON COLUMN public.offset_case.insured_id IS '被保險人身分證字號';
+COMMENT ON COLUMN public.offset_case.char_no IS '病歷號碼';
+COMMENT ON COLUMN public.offset_case.admission_no IS '住院號';
+COMMENT ON COLUMN public.offset_case.admission_date IS '住院日期';
+COMMENT ON COLUMN public.offset_case.send_date IS '傳輸日期時間';
+COMMENT ON COLUMN public.offset_case.calculated_amount IS '試算金額';
+COMMENT ON COLUMN public.offset_case.pay_date IS '繳費日期';
+COMMENT ON COLUMN public.offset_case.act_offset_amount IS '實際抵繳金額';
+COMMENT ON COLUMN public.offset_case.offset_date IS '抵繳日期時間';
+COMMENT ON COLUMN public.offset_case.close_date IS '結案日期';
+COMMENT ON COLUMN public.offset_case.status_code IS '案件狀態';
+COMMENT ON COLUMN public.offset_case.stop_status IS '終止時狀態';
+COMMENT ON COLUMN public.offset_case.reject_reason IS '終止原因';
+COMMENT ON COLUMN public.offset_case.auth_agreement IS '授權同意書';
+COMMENT ON COLUMN public.offset_case.update_id IS '更新人員';
+COMMENT ON COLUMN public.offset_case.update_tenant IS '更新租戶';
+COMMENT ON COLUMN public.offset_case.update_time IS '更新時間';
+
+
+CREATE TABLE public.offset_case_cal (
+	case_no varchar(20) NOT NULL, -- 案件編號
+	doc_type_num int4 NOT NULL, -- 文件傳輸次數
+	calculated_amount numeric NOT NULL, -- 試算金額
+	cal_reason varchar(1000) NULL, -- 試算金額為0原因
+	update_id varchar(50) NULL, -- 更新人員
+	update_tenant varchar(50) NOT NULL, -- 更新租戶
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT offset_case_cal_pk PRIMARY KEY (case_no, doc_type_num)
+);
+COMMENT ON TABLE public.offset_case_cal IS '抵繳案件計算歷程檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.offset_case_cal.case_no IS '案件編號';
+COMMENT ON COLUMN public.offset_case_cal.doc_type_num IS '文件傳輸次數';
+COMMENT ON COLUMN public.offset_case_cal.calculated_amount IS '試算金額';
+COMMENT ON COLUMN public.offset_case_cal.cal_reason IS '試算金額為0原因';
+COMMENT ON COLUMN public.offset_case_cal.update_id IS '更新人員';
+COMMENT ON COLUMN public.offset_case_cal.update_tenant IS '更新租戶';
+COMMENT ON COLUMN public.offset_case_cal.update_time IS '更新時間';
+
+CREATE TABLE public.offset_case_document (
+	doc_seq serial4 NOT NULL, -- 傳輸序號
+	case_no varchar(20) NOT NULL, -- 案件編號
+	doc_type varchar(5) NOT NULL, -- 傳輸分類
+	batch_id int4 NOT NULL, -- 傳輸文件索引代號
+	doc_type_num int4 NOT NULL, -- 傳輸文件次數
+	paper_seq int4 NOT NULL, -- FHIR文件序號
+	doc_name varchar(200) NOT NULL, -- 傳輸文件名稱
+	status_code bpchar(1) NOT NULL, -- 傳輸狀態
+	update_id varchar(50) NOT NULL, -- 更新人員
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT offset_case_document_pk PRIMARY KEY (doc_seq)
+);
+COMMENT ON TABLE public.offset_case_document IS '抵繳文件傳輸檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.offset_case_document.doc_seq IS '傳輸序號';
+COMMENT ON COLUMN public.offset_case_document.case_no IS '案件編號';
+COMMENT ON COLUMN public.offset_case_document.doc_type IS '傳輸分類';
+COMMENT ON COLUMN public.offset_case_document.batch_id IS '傳輸文件索引代號';
+COMMENT ON COLUMN public.offset_case_document.doc_type_num IS '傳輸文件次數';
+COMMENT ON COLUMN public.offset_case_document.paper_seq IS 'FHIR文件序號';
+COMMENT ON COLUMN public.offset_case_document.doc_name IS '傳輸文件名稱';
+COMMENT ON COLUMN public.offset_case_document.status_code IS '傳輸狀態';
+COMMENT ON COLUMN public.offset_case_document.update_id IS '更新人員';
+COMMENT ON COLUMN public.offset_case_document.update_time IS '更新時間';
+
+CREATE TABLE public.offset_case_log (
+	log_id serial4 NOT NULL, -- LOG_ID
+	log_time timestamp NOT NULL, -- 異動時間
+	log_type varchar(3) NOT NULL, -- 異動類型
+	pre_log_id int4 NULL, -- 前一筆異動log
+	case_no varchar(20) NOT NULL, -- 案件編號
+	case_date date NOT NULL, -- 申請日期
+	case_type varchar(1) NOT NULL, -- 案件類型
+	organization_id varchar(50) NOT NULL, -- 醫事機構代碼
+	ct_tenant_id varchar(50) NOT NULL, -- 保險租戶代碼
+	insured_name varchar(50) NOT NULL, -- 被保險人姓名
+	insured_id varchar(50) NOT NULL, -- 被保險人身分證字號
+	char_no varchar(50) NOT NULL, -- 病歷號碼
+	admission_no varchar(50) NOT NULL, -- 住院號
+	admission_date date NOT NULL, -- 住院日期
+	send_date timestamp NULL, -- 傳輸日期時間
+	calculated_amount numeric NULL, -- 試算金額
+	pay_date date NULL, -- 繳費日期
+	act_offset_amount numeric NULL, -- 實際抵繳金額
+	offset_date timestamp NULL, -- 抵繳日期時間
+	close_date date NULL, -- 結案日期
+	status_code varchar(3) NOT NULL, -- 案件狀態
+	stop_status varchar(3) NULL, -- 終止時狀態
+	reject_reason varchar(200) NULL, -- 終止原因
+	auth_agreement text NULL, -- 授權同意書
+	update_id varchar(50) NOT NULL, -- 更新人員
+	update_tenant varchar(50) NOT NULL, -- 更新租戶
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT offset_case_log_pk PRIMARY KEY (log_id)
+);
+COMMENT ON TABLE public.offset_case_log IS '抵繳案件log檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.offset_case_log.log_id IS 'LOG_ID';
+COMMENT ON COLUMN public.offset_case_log.log_time IS '異動時間';
+COMMENT ON COLUMN public.offset_case_log.log_type IS '異動類型';
+COMMENT ON COLUMN public.offset_case_log.pre_log_id IS '前一筆異動log';
+COMMENT ON COLUMN public.offset_case_log.case_no IS '案件編號';
+COMMENT ON COLUMN public.offset_case_log.case_date IS '申請日期';
+COMMENT ON COLUMN public.offset_case_log.case_type IS '案件類型';
+COMMENT ON COLUMN public.offset_case_log.organization_id IS '醫事機構代碼';
+COMMENT ON COLUMN public.offset_case_log.ct_tenant_id IS '保險租戶代碼';
+COMMENT ON COLUMN public.offset_case_log.insured_name IS '被保險人姓名';
+COMMENT ON COLUMN public.offset_case_log.insured_id IS '被保險人身分證字號';
+COMMENT ON COLUMN public.offset_case_log.char_no IS '病歷號碼';
+COMMENT ON COLUMN public.offset_case_log.admission_no IS '住院號';
+COMMENT ON COLUMN public.offset_case_log.admission_date IS '住院日期';
+COMMENT ON COLUMN public.offset_case_log.send_date IS '傳輸日期時間';
+COMMENT ON COLUMN public.offset_case_log.calculated_amount IS '試算金額';
+COMMENT ON COLUMN public.offset_case_log.pay_date IS '繳費日期';
+COMMENT ON COLUMN public.offset_case_log.act_offset_amount IS '實際抵繳金額';
+COMMENT ON COLUMN public.offset_case_log.offset_date IS '抵繳日期時間';
+COMMENT ON COLUMN public.offset_case_log.close_date IS '結案日期';
+COMMENT ON COLUMN public.offset_case_log.status_code IS '案件狀態';
+COMMENT ON COLUMN public.offset_case_log.stop_status IS '終止時狀態';
+COMMENT ON COLUMN public.offset_case_log.reject_reason IS '終止原因';
+COMMENT ON COLUMN public.offset_case_log.auth_agreement IS '授權同意書';
+COMMENT ON COLUMN public.offset_case_log.update_id IS '更新人員';
+COMMENT ON COLUMN public.offset_case_log.update_tenant IS '更新租戶';
+COMMENT ON COLUMN public.offset_case_log.update_time IS '更新時間';
+
+CREATE TABLE public.case_doc_pattern (
+	pattern_seq serial4 NOT NULL, -- 設定檔流水號
+	sys_pattern_seq int4 NOT NULL, -- sys設定檔序號
+	fhir_paper_seq int4 NOT NULL, -- 文件序號
+	fhir_paper_code varchar(10) NOT NULL, -- 文件代碼
+	fhir_paper_name varchar(200) NOT NULL, -- 文件名稱
+	fhir_paper_ver int4 NOT NULL, -- 文件版本
+	case_type varchar(1) NOT NULL, -- 理賠類型
+	pattern_sort varchar(3) NOT NULL, -- 理賠模板分類
+	effective_date date NOT NULL, -- 生效日
+	invalid_date date NULL, -- 失效日
+	fhir_mapping_seq int4 NULL, -- 對應檔序號
+	fhir_mapping_name varchar(500) NULL, -- 對應檔名稱
+	status_code bpchar(1) NOT NULL, -- 模板狀態
+	sys_update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- SYS更新時間
+	update_id varchar(50) NOT NULL, -- 更新人員
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT case_doc_pattern_pk PRIMARY KEY (pattern_seq)
+);
+COMMENT ON TABLE public.case_doc_pattern IS '理賠模板版本設定檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.case_doc_pattern.pattern_seq IS '設定檔流水號';
+COMMENT ON COLUMN public.case_doc_pattern.sys_pattern_seq IS 'sys設定檔序號';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_paper_seq IS '文件序號';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_paper_code IS '文件代碼';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_paper_name IS '文件名稱';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_paper_ver IS '文件版本';
+COMMENT ON COLUMN public.case_doc_pattern.case_type IS '理賠類型';
+COMMENT ON COLUMN public.case_doc_pattern.pattern_sort IS '理賠模板分類';
+COMMENT ON COLUMN public.case_doc_pattern.effective_date IS '生效日';
+COMMENT ON COLUMN public.case_doc_pattern.invalid_date IS '失效日';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_mapping_seq IS '對應檔序號';
+COMMENT ON COLUMN public.case_doc_pattern.fhir_mapping_name IS '對應檔名稱';
+COMMENT ON COLUMN public.case_doc_pattern.status_code IS '模板狀態';
+COMMENT ON COLUMN public.case_doc_pattern.sys_update_time IS 'SYS更新時間';
+COMMENT ON COLUMN public.case_doc_pattern.update_id IS '更新人員';
+COMMENT ON COLUMN public.case_doc_pattern.update_time IS '更新時間';
+
+CREATE TABLE public.offset_allowlist (
+	ct_tenant_id varchar(50) NOT NULL, -- 保險租戶代碼
+	insured_id varchar(50) NOT NULL, -- 抵繳病患ID
+	update_id varchar(50) NOT NULL, -- 更新人員
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新時間
+	CONSTRAINT offset_allowlist_pk PRIMARY KEY (ct_tenant_id, insured_id)
+);
+COMMENT ON TABLE public.offset_allowlist IS '抵繳名單檔';
+
+-- Column comments
+
+COMMENT ON COLUMN public.offset_allowlist.ct_tenant_id IS '保險租戶代碼';
+COMMENT ON COLUMN public.offset_allowlist.insured_id IS '抵繳病患ID';
+COMMENT ON COLUMN public.offset_allowlist.update_id IS '更新人員';
+COMMENT ON COLUMN public.offset_allowlist.update_time IS '更新時間';
+
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'V22688680A', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N12307462C', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'Q13150933P', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'G29885249L', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N26837078C', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'P14922287A', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N11848776A', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'L22026226A', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N19883290A', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'H18824603K', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'H16595733L', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'D12213759L', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N13991434N', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'C11775108N', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'F11714801O', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'P27871030K', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'J14022039F', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'N11848773O', 'INI', '2025-03-04 14:07:38.629');
+INSERT INTO public.offset_allowlist
+(ct_tenant_id, insured_id, update_id, update_time)
+VALUES('ct-03374707-ytzw8', 'Q25585550P', 'INI', '2025-03-04 14:07:38.629');
+
+CREATE TABLE public.fhir_server_bundle (
+	bundle_seq serial4 NOT NULL, -- bundle序號
+	batch_seq int4 NOT NULL, -- 執行批號
+	input_type varchar(10) NOT NULL, -- 來源資料型態
+	input_source text NOT NULL, -- 來源資料內容(base64)
+	temp_seq int4 NOT NULL, -- 模版序號
+	bundle_type varchar(20) NOT NULL, -- 寫入fhir方式
+	status_code bpchar(1) NOT NULL, -- 寫入狀態
+	error_msg text NULL, -- 錯誤訊息
+	business_value varchar(20) NULL, -- 業務識別碼(病歷號,住院號...)
+	update_id varchar(50) NOT NULL, -- 更新人員ID
+	update_time timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新日期時間
+	status_desc varchar(100) NULL, -- 記錄說明
+	CONSTRAINT fhir_server_bundle_pk PRIMARY KEY (bundle_seq)
+);
+COMMENT ON TABLE public.fhir_server_bundle IS '寫入FHIR bundle結果(每次bundle寫入)';
+
+-- Column comments
+
+COMMENT ON COLUMN public.fhir_server_bundle.bundle_seq IS 'bundle序號';
+COMMENT ON COLUMN public.fhir_server_bundle.batch_seq IS '執行批號';
+COMMENT ON COLUMN public.fhir_server_bundle.input_type IS '來源資料型態';
+COMMENT ON COLUMN public.fhir_server_bundle.input_source IS '來源資料內容(base64)';
+COMMENT ON COLUMN public.fhir_server_bundle.temp_seq IS '模版序號';
+COMMENT ON COLUMN public.fhir_server_bundle.bundle_type IS '寫入fhir方式';
+COMMENT ON COLUMN public.fhir_server_bundle.status_code IS '寫入狀態';
+COMMENT ON COLUMN public.fhir_server_bundle.error_msg IS '錯誤訊息';
+COMMENT ON COLUMN public.fhir_server_bundle.business_value IS '業務識別碼(病歷號,住院號...)';
+COMMENT ON COLUMN public.fhir_server_bundle.update_id IS '更新人員ID';
+COMMENT ON COLUMN public.fhir_server_bundle.update_time IS '更新日期時間';
+COMMENT ON COLUMN public.fhir_server_bundle.status_desc IS '記錄說明';
+
+INSERT INTO public.fhir_server_bundle
+(bundle_seq, batch_seq, input_type, input_source, temp_seq, bundle_type, status_code, error_msg, business_value, update_id, update_time, status_desc)
+VALUES(1095, 931, 'XML', 'PERPQz4KPE9SR0FOSVpBVElPTl9JRD4xMTAxMDIwMDE4PC9PUkdBTklaQVRJT05fSUQ+CjxFTkNPVU5URVJfSUQ+STExMzAwMDU2Nzk1PC9FTkNPVU5URVJfSUQ+CjxDSEFSX05PPjAwMjU0NzU1NTQ8L0NIQVJfTk8+CjxQQVRJRU5UX0lEPlAxNDkyMjI4N0E8L1BBVElFTlRfSUQ+CjxQQVRJRU5UX05BTUU+5ris6KmmLUE8L1BBVElFTlRfTkFNRT4KPFBBVElFTlRfQklSVEhEQVk+MTk1MC0wMS0wMTwvUEFUSUVOVF9CSVJUSERBWT4KPFBBVElFTlRfR0VOREVSPm1hbGU8L1BBVElFTlRfR0VOREVSPgo8SEVBTFRIX0lOU1VSQU5DRT5wYXk8L0hFQUxUSF9JTlNVUkFOQ0U+CjxFTkNPVU5URVJfU1RBUlRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfU1RBUlRfREFURT4KPEVOQ09VTlRFUl9FTkRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfRU5EX0RBVEU+CjxFTkNPVU5URVJfREVQVD7purvphonnp5E8L0VOQ09VTlRFUl9ERVBUPgo8UFJBQ1RJVElPTkVSX05BTUU+5L2V5L+h5piOPC9QUkFDVElUSU9ORVJfTkFNRT4KPFJDUFRfREFURT4yMDI0LTEyLTI1PC9SQ1BUX0RBVEU+CjxFTkNPVU5URVJfREVQVF9DT0RFPjgxPC9FTkNPVU5URVJfREVQVF9DT0RFPgo8RElBR19QUk9PRl9EQVRFPjIwMjQtMTItMjU8L0RJQUdfUFJPT0ZfREFURT4KPERJQUdfQ09OVEVOVD7pnI3kuoIo5Lul5LiL56m655m9KTwvRElBR19DT05URU5UPgo8RE9DVE9SX09SREVSPuWunOaOpeWPl3sgfeayu+eZguWPiuWumuacn+mWgOiouui/vei5pCjku6XkuIvnqbrnmb0pPC9ET0NUT1JfT1JERVI+CjxJQ0RDT0RFX0xJU1Q+CjxJQ0RfU0VRPjE8L0lDRF9TRVE+CjxJQ0RfS0lORD4yPC9JQ0RfS0lORD4KPElDRF9DT0RFPkEwMDwvSUNEX0NPREU+CjxJQ0RfTkFNRT7pnI3kuoI8L0lDRF9OQU1FPgo8L0lDRENPREVfTElTVD4KPC9ET0M+', 367, 'transaction', '2', NULL, 'ADM20250103001', 'batch', '2025-01-03 10:47:48.925', NULL);
+INSERT INTO public.fhir_server_bundle
+(bundle_seq, batch_seq, input_type, input_source, temp_seq, bundle_type, status_code, error_msg, business_value, update_id, update_time, status_desc)
+VALUES(1096, 932, 'XML', 'PERPQz4KPE9SR0FOSVpBVElPTl9JRD4xMTAxMDIwMDE4PC9PUkdBTklaQVRJT05fSUQ+CjxFTkNPVU5URVJfSUQ+STExMzAwMDU2Nzk1PC9FTkNPVU5URVJfSUQ+CjxDSEFSX05PPjAwMjU0NzU1NTQ8L0NIQVJfTk8+CjxQQVRJRU5UX0lEPlAxNDkyMjI4N0E8L1BBVElFTlRfSUQ+CjxQQVRJRU5UX05BTUU+5ris6KmmLUE8L1BBVElFTlRfTkFNRT4KPFBBVElFTlRfQklSVEhEQVk+MTk1MC0wMS0wMTwvUEFUSUVOVF9CSVJUSERBWT4KPFBBVElFTlRfR0VOREVSPm1hbGU8L1BBVElFTlRfR0VOREVSPgo8SEVBTFRIX0lOU1VSQU5DRT5wYXk8L0hFQUxUSF9JTlNVUkFOQ0U+CjxFTkNPVU5URVJfU1RBUlRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfU1RBUlRfREFURT4KPEVOQ09VTlRFUl9FTkRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfRU5EX0RBVEU+CjxFTkNPVU5URVJfREVQVD7purvphonnp5E8L0VOQ09VTlRFUl9ERVBUPgo8UFJBQ1RJVElPTkVSX05BTUU+5L2V5L+h5piOPC9QUkFDVElUSU9ORVJfTkFNRT4KPFJDUFRfREFURT4yMDI0LTEyLTI1PC9SQ1BUX0RBVEU+CjxFTkNPVU5URVJfREVQVF9DT0RFPjgxPC9FTkNPVU5URVJfREVQVF9DT0RFPgo8RElBR19QUk9PRl9EQVRFPjIwMjQtMTItMjU8L0RJQUdfUFJPT0ZfREFURT4KPERJQUdfQ09OVEVOVD7pnI3kuoIo5Lul5LiL56m655m9KTwvRElBR19DT05URU5UPgo8RE9DVE9SX09SREVSPuWunOaOpeWPl3sgfeayu+eZguWPiuWumuacn+mWgOiouui/vei5pCjku6XkuIvnqbrnmb0pPC9ET0NUT1JfT1JERVI+CjxJQ0RDT0RFX0xJU1Q+CjxJQ0RfU0VRPjE8L0lDRF9TRVE+CjxJQ0RfS0lORD4yPC9JQ0RfS0lORD4KPElDRF9DT0RFPkEwMDwvSUNEX0NPREU+CjxJQ0RfTkFNRT7pnI3kuoI8L0lDRF9OQU1FPgo8L0lDRENPREVfTElTVD4KPC9ET0M+', 367, 'transaction', '2', NULL, 'ADM20250106001', 'batch', '2025-01-06 15:32:49.225', NULL);
+INSERT INTO public.fhir_server_bundle
+(bundle_seq, batch_seq, input_type, input_source, temp_seq, bundle_type, status_code, error_msg, business_value, update_id, update_time, status_desc)
+VALUES(1097, 933, 'XML', 'PERPQz4KPE9SR0FOSVpBVElPTl9JRD4xMTAxMDIwMDE4PC9PUkdBTklaQVRJT05fSUQ+CjxFTkNPVU5URVJfSUQ+STExMzAwMDU2Nzk1PC9FTkNPVU5URVJfSUQ+CjxDSEFSX05PPjAwMjU0NzU1NTQ8L0NIQVJfTk8+CjxQQVRJRU5UX0lEPlAxNDkyMjI4N0E8L1BBVElFTlRfSUQ+CjxQQVRJRU5UX05BTUU+5ris6KmmLUE8L1BBVElFTlRfTkFNRT4KPFBBVElFTlRfQklSVEhEQVk+MTk1MC0wMS0wMTwvUEFUSUVOVF9CSVJUSERBWT4KPFBBVElFTlRfR0VOREVSPm1hbGU8L1BBVElFTlRfR0VOREVSPgo8SEVBTFRIX0lOU1VSQU5DRT5wYXk8L0hFQUxUSF9JTlNVUkFOQ0U+CjxFTkNPVU5URVJfU1RBUlRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfU1RBUlRfREFURT4KPEVOQ09VTlRFUl9FTkRfREFURT4yMDI0LTEyLTI1PC9FTkNPVU5URVJfRU5EX0RBVEU+CjxFTkNPVU5URVJfREVQVD7purvphonnp5E8L0VOQ09VTlRFUl9ERVBUPgo8UFJBQ1RJVElPTkVSX05BTUU+5L2V5L+h5piOPC9QUkFDVElUSU9ORVJfTkFNRT4KPFJDUFRfREFURT4yMDI0LTEyLTI1PC9SQ1BUX0RBVEU+CjxFTkNPVU5URVJfREVQVF9DT0RFPjgxPC9FTkNPVU5URVJfREVQVF9DT0RFPgo8RElBR19QUk9PRl9EQVRFPjIwMjQtMTItMjU8L0RJQUdfUFJPT0ZfREFURT4KPERJQUdfQ09OVEVOVD7pnI3kuoIo5Lul5LiL56m655m9KTwvRElBR19DT05URU5UPgo8RE9DVE9SX09SREVSPuWunOaOpeWPl3sgfeayu+eZguWPiuWumuacn+mWgOiouui/vei5pCjku6XkuIvnqbrnmb0pPC9ET0NUT1JfT1JERVI+CjxJQ0RDT0RFX0xJU1Q+CjxJQ0RfU0VRPjE8L0lDRF9TRVE+CjxJQ0RfS0lORD4yPC9JQ0RfS0lORD4KPElDRF9DT0RFPkEwMDwvSUNEX0NPREU+CjxJQ0RfTkFNRT7pnI3kuoI8L0lDRF9OQU1FPgo8L0lDRENPREVfTElTVD4KPC9ET0M+', 367, 'transaction', '2', NULL, 'ADM20250106001', 'batch', '2025-01-06 16:07:42.924', NULL);
+
+CREATE TABLE public.fhir_server_resource (
+ resource_seq serial4 NOT NULL, -- 寫入resource序號
+ resource_id varchar(50) NOT NULL, -- resource fhir server uid
+ bundle_seq int4 NOT NULL, -- bundle序號
+ batch_seq int4 NOT NULL, -- 執行批號
+ resource_name varchar(50) NOT NULL, -- resource名稱
+ full_url varchar(500) NOT NULL, -- 查詢連結
+ upload_version int4 NOT NULL, -- 上傳版號
+ is_delete bool NOT NULL, -- 刪除註記
+ update_id varchar(50) NOT NULL, -- 更新人員ID
+ update_time timestamp NOT NULL, -- 更新日期時間
+ CONSTRAINT fhir_server_resource_pk PRIMARY KEY (resource_seq)
+);
+COMMENT ON TABLE public.fhir_server_resource IS '寫入FHIR resource索引表';
+
+-- Column comments
+
+COMMENT ON COLUMN public.fhir_server_resource.resource_seq IS '寫入resource序號';
+COMMENT ON COLUMN public.fhir_server_resource.resource_id IS 'resource fhir server uid';
+COMMENT ON COLUMN public.fhir_server_resource.bundle_seq IS 'bundle序號';
+COMMENT ON COLUMN public.fhir_server_resource.batch_seq IS '執行批號';
+COMMENT ON COLUMN public.fhir_server_resource.resource_name IS 'resource名稱';
+COMMENT ON COLUMN public.fhir_server_resource.full_url IS '查詢連結';
+COMMENT ON COLUMN public.fhir_server_resource.upload_version IS '上傳版號';
+COMMENT ON COLUMN public.fhir_server_resource.is_delete IS '刪除註記';
+COMMENT ON COLUMN public.fhir_server_resource.update_id IS '更新人員ID';
+COMMENT ON COLUMN public.fhir_server_resource.update_time IS '更新日期時間';
+
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3059, 'a1cb5dde-497f-4f48-a10a-244d605b1067', 1095, 931, 'Claim', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Claim/a1cb5dde-497f-4f48-a10a-244d605b1067', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3060, '4912cff0-0a35-4253-a0be-0aa31606b069', 1095, 931, 'Coverage', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Coverage/4912cff0-0a35-4253-a0be-0aa31606b069', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3061, 'e2858824-9f9c-4c9d-9aec-1b5a6b048806', 1095, 931, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/e2858824-9f9c-4c9d-9aec-1b5a6b048806', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3062, '124e8c1f-511d-3ae0-927f-3ff9964c7508', 1095, 931, 'Condition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Condition/124e8c1f-511d-3ae0-927f-3ff9964c7508', 2, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3063, '73832ab4-09d7-491f-83d1-fe1af5c00661', 1095, 931, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/73832ab4-09d7-491f-83d1-fe1af5c00661', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3064, '687b8828-8e3b-4853-9ff1-3144f9d1c9fe', 1095, 931, 'Patient', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Patient/687b8828-8e3b-4853-9ff1-3144f9d1c9fe', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3065, 'c0198ad9-481f-4949-9ce0-74df74edf534', 1095, 931, 'Practitioner', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Practitioner/c0198ad9-481f-4949-9ce0-74df74edf534', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3066, 'da030854-f150-4fd7-b997-ea81c97fa529', 1095, 931, 'Composition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Composition/da030854-f150-4fd7-b997-ea81c97fa529', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3067, '2c9e1957-0cf7-4255-bec7-2c0301ac0ef8', 1095, 931, 'Encounter', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Encounter/2c9e1957-0cf7-4255-bec7-2c0301ac0ef8', 1, false, 'batch', '2025-01-03 10:47:48.925');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3068, 'c1becd8b-e062-4240-9ba9-10e65391b449', 1096, 932, 'Claim', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Claim/c1becd8b-e062-4240-9ba9-10e65391b449', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3069, 'fff55aad-23a2-4e2f-8239-062c277e201b', 1096, 932, 'Coverage', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Coverage/fff55aad-23a2-4e2f-8239-062c277e201b', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3070, '8be29c55-6965-46f0-bd84-820a0fd0c3bc', 1096, 932, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/8be29c55-6965-46f0-bd84-820a0fd0c3bc', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3071, '124e8c1f-511d-3ae0-927f-3ff9964c7508', 1096, 932, 'Condition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Condition/124e8c1f-511d-3ae0-927f-3ff9964c7508', 3, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3072, '1aa7cf31-4c55-4ce3-b8ef-65cd58e2fec5', 1096, 932, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/1aa7cf31-4c55-4ce3-b8ef-65cd58e2fec5', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3073, '2804cb90-6b49-4e01-ba7c-2d475eb66e1f', 1096, 932, 'Patient', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Patient/2804cb90-6b49-4e01-ba7c-2d475eb66e1f', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3074, '6d9f3172-fadb-46f7-9e24-0bc625090e29', 1096, 932, 'Practitioner', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Practitioner/6d9f3172-fadb-46f7-9e24-0bc625090e29', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3075, 'a01d11c9-8575-4263-915d-f7583c59624a', 1096, 932, 'Composition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Composition/a01d11c9-8575-4263-915d-f7583c59624a', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3076, 'f9acd921-8dbd-441d-862f-7f7276e94fcd', 1096, 932, 'Encounter', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Encounter/f9acd921-8dbd-441d-862f-7f7276e94fcd', 1, false, 'batch', '2025-01-06 15:32:49.225');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3077, 'efa2f217-8210-440c-abec-d93b760872cf', 1097, 933, 'Claim', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Claim/efa2f217-8210-440c-abec-d93b760872cf', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3078, '31d15484-74f5-45d9-bd44-739d37425ebd', 1097, 933, 'Coverage', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Coverage/31d15484-74f5-45d9-bd44-739d37425ebd', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3079, 'fa6dcd11-2bc2-4221-8f78-e43a31a05f90', 1097, 933, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/fa6dcd11-2bc2-4221-8f78-e43a31a05f90', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3080, '124e8c1f-511d-3ae0-927f-3ff9964c7508', 1097, 933, 'Condition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Condition/124e8c1f-511d-3ae0-927f-3ff9964c7508', 4, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3081, '543370d0-22e2-4151-b03e-a8762ffe7b95', 1097, 933, 'Organization', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Organization/543370d0-22e2-4151-b03e-a8762ffe7b95', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3082, '5b4e28cf-26fc-429c-85a7-c4a06ee79346', 1097, 933, 'Patient', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Patient/5b4e28cf-26fc-429c-85a7-c4a06ee79346', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3083, 'ec689968-dde9-4d1b-83cd-5ea6c4379c73', 1097, 933, 'Practitioner', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Practitioner/ec689968-dde9-4d1b-83cd-5ea6c4379c73', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3084, 'f7cab7b6-852d-4076-80f9-9eeeec7f4d71', 1097, 933, 'Composition', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Composition/f7cab7b6-852d-4076-80f9-9eeeec7f4d71', 1, false, 'batch', '2025-01-06 16:07:42.924');
+INSERT INTO public.fhir_server_resource
+(resource_seq, resource_id, bundle_seq, batch_seq, resource_name, full_url, upload_version, is_delete, update_id, update_time)
+VALUES(3085, 'c0b81404-acb5-4e4e-b914-eb66561211f5', 1097, 933, 'Encounter', 'https://api.hhc-ut.net/fhir/cehr-202311272-stiii/Encounter/c0b81404-acb5-4e4e-b914-eb66561211f5', 1, false, 'batch', '2025-01-06 16:07:42.924');
+
+

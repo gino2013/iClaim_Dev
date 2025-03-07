@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.cathay.hospital.controller.OffsetCaseControllerTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.456 s - in com.cathay.hospital.controller.OffsetCaseControllerTest

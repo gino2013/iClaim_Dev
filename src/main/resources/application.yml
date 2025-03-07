@@ -1,0 +1,15 @@
+spring:
+  profiles:
+    active: dev
+
+app:
+  environment: UT
+
+external:
+  api:
+    calculation:
+      url: http://mock-calculation-service/api/v1/calculate
+    document:
+      url: http://mock-document-service/api/v1/upload
+    gip:
+      url: http://mock-gip-service/api/v1/tenant-mapping 

@@ -1,0 +1,50 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary and Log Files
+*~
+*.log
+*.tmp
+*.swp
+*.bak
+*.diff
+*.patch
+
+# Compiled Files
+*.o
+*.pyc
+*.class
+*.exe
+*.dll
+*.obj
+*.out
+
+# Dependency Managers
+node_modules/
+vendor/
+Pods/
+.venv/
+env/
+.gradle/
+.m2/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.xcodeproj
+*.sln
+*.suo
+*.user
+*.userosscache
+*.csproj.user
+*.code-workspace
+
+# Other
+.Trash/
+.Spotlight-V100/
+.Trashes/
+ehthumbs.db
+Thumbs.db
+Desktop.ini
