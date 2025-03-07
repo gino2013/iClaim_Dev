@@ -5,7 +5,8 @@ import com.cathay.hospital.model.ApiResponse;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.service.OffsetCaseService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,10 +36,10 @@ import java.util.Map;
  * @version 1.0
  * @since 2025-03-06
  */
-@Slf4j
 @RestController
 @RequestMapping("/v1/case")
 public class OffsetCaseController {
+    private static final Logger log = LoggerFactory.getLogger(OffsetCaseController.class);
 
     @Autowired
     private OffsetCaseService offsetCaseService;
@@ -77,6 +78,30 @@ public class OffsetCaseController {
         } catch (Exception e) {
             log.error("Unexpected error occurred", e);
             return ResponseEntity.ok(ApiResponse.error("9999", "系統發生未預期的錯誤"));
+        }
+    }
+
+    @PostMapping("/process")
+    public ResponseEntity<CalculationResult> processCase(
+            @RequestHeader Map<String, String> headers,
+            @RequestBody OffsetCaseRequest request) {
+        log.info("Received headers: {}", headers);
+        log.info("Received request body: {}", request);
+        log.info("Request fields:");
+        log.info("- organizationId: [{}]", request.getOrganizationId());
+        log.info("- insuredName: [{}]", request.getInsuredName());
+        log.info("- insuredId: [{}]", request.getInsuredId());
+        log.info("- charNo: [{}]", request.getCharNo());
+        log.info("- admissionNo: [{}]", request.getAdmissionNo());
+        log.info("- admissionDate: [{}]", request.getAdmissionDate());
+        log.info("- updateId: [{}]", request.getUpdateId());
+
+        try {
+            CalculationResult result = offsetCaseService.processCase(headers, request);
+            return ResponseEntity.ok(result);
+        } catch (BusinessException e) {
+            log.error("Business error occurred: {}", e.getMessage(), e);
+            throw e;
         }
     }
 } 

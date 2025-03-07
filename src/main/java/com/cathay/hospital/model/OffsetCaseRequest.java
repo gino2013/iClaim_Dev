@@ -1,6 +1,12 @@
 package com.cathay.hospital.model;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 案件新增請求模型類
@@ -32,6 +38,9 @@ import lombok.Data;
  * @since 2025-03-06
  */
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OffsetCaseRequest {
     /** 機構代碼 */
     private String organizationId;
@@ -52,109 +61,104 @@ public class OffsetCaseRequest {
     private String admissionDate;
     
     /** 授權同意書 (Y/N) */
-    private String authAgreement;
+    // private String authAgreement;
     
     /** 更新人員 */
     private String updateId;
 
-    private byte[] document;
+    private List<Map<String, String>> documents;
+    private String document;  // Base64 encoded document
+    private String policyNo;
+    private BigDecimal offsetAmount;
 
-    public OffsetCaseRequest() {}
-
-    public void setOrganizationId(String organizationId) { this.organizationId = organizationId; }
-    public void setInsuredName(String insuredName) { this.insuredName = insuredName; }
-    public void setInsuredId(String insuredId) { this.insuredId = insuredId; }
-    public void setCharNo(String charNo) { this.charNo = charNo; }
-    public void setAdmissionNo(String admissionNo) { this.admissionNo = admissionNo; }
-    public void setAdmissionDate(String admissionDate) { this.admissionDate = admissionDate; }
-    public void setAuthAgreement(String authAgreement) { this.authAgreement = authAgreement; }
-    public void setUpdateId(String updateId) { this.updateId = updateId; }
-    public void setDocument(byte[] document) { this.document = document; }
-
-    public String getOrganizationId() { return organizationId; }
-    public String getInsuredName() { return insuredName; }
-    public String getInsuredId() { return insuredId; }
-    public String getCharNo() { return charNo; }
-    public String getAdmissionNo() { return admissionNo; }
-    public String getAdmissionDate() { return admissionDate; }
-    public String getAuthAgreement() { return authAgreement; }
-    public String getUpdateId() { return updateId; }
-    public byte[] getDocument() { return document; }
-
-    private OffsetCaseRequest(Builder builder) {
-        this.organizationId = builder.organizationId;
-        this.insuredName = builder.insuredName;
-        this.insuredId = builder.insuredId;
-        this.charNo = builder.charNo;
-        this.admissionNo = builder.admissionNo;
-        this.admissionDate = builder.admissionDate;
-        this.authAgreement = builder.authAgreement;
-        this.updateId = builder.updateId;
-        this.document = builder.document;
+    // Getter methods
+    public String getOrganizationId() {
+        return organizationId;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public String getCharNo() {
+        return charNo;
     }
 
-    public static class Builder {
-        private String organizationId;
-        private String insuredName;
-        private String insuredId;
-        private String charNo;
-        private String admissionNo;
-        private String admissionDate;
-        private String authAgreement;
-        private String updateId;
-        private byte[] document;
+    public String getAdmissionDate() {
+        return admissionDate;
+    }
 
-        public Builder organizationId(String organizationId) {
-            this.organizationId = organizationId;
-            return this;
-        }
+    public String getUpdateId() {
+        return updateId;
+    }
 
-        public Builder insuredName(String insuredName) {
-            this.insuredName = insuredName;
-            return this;
-        }
+    public List<Map<String, String>> getDocuments() {
+        return documents;
+    }
 
-        public Builder insuredId(String insuredId) {
-            this.insuredId = insuredId;
-            return this;
-        }
+    // Setter methods
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
+    }
 
-        public Builder charNo(String charNo) {
-            this.charNo = charNo;
-            return this;
-        }
+    public void setCharNo(String charNo) {
+        this.charNo = charNo;
+    }
 
-        public Builder admissionNo(String admissionNo) {
-            this.admissionNo = admissionNo;
-            return this;
-        }
+    public void setAdmissionDate(String admissionDate) {
+        this.admissionDate = admissionDate;
+    }
 
-        public Builder admissionDate(String admissionDate) {
-            this.admissionDate = admissionDate;
-            return this;
-        }
+    public void setUpdateId(String updateId) {
+        this.updateId = updateId;
+    }
 
-        public Builder authAgreement(String authAgreement) {
-            this.authAgreement = authAgreement;
-            return this;
-        }
+    public void setDocuments(List<Map<String, String>> documents) {
+        this.documents = documents;
+    }
 
-        public Builder updateId(String updateId) {
-            this.updateId = updateId;
-            return this;
-        }
+    // 手动添加 getter/setter 方法
+    public void setAdmissionNo(String admissionNo) {
+        this.admissionNo = admissionNo;
+    }
 
-        public Builder document(byte[] document) {
-            this.document = document;
-            return this;
-        }
+    public void setInsuredId(String insuredId) {
+        this.insuredId = insuredId;
+    }
 
-        public OffsetCaseRequest build() {
-            return new OffsetCaseRequest(this);
-        }
+    public void setDocument(String document) {
+        this.document = document;
+    }
+
+    public void setPolicyNo(String policyNo) {
+        this.policyNo = policyNo;
+    }
+
+    public void setInsuredName(String insuredName) {
+        this.insuredName = insuredName;
+    }
+
+    public void setOffsetAmount(BigDecimal offsetAmount) {
+        this.offsetAmount = offsetAmount;
+    }
+
+    public String getAdmissionNo() {
+        return admissionNo;
+    }
+
+    public String getInsuredId() {
+        return insuredId;
+    }
+
+    public String getDocument() {
+        return document;
+    }
+
+    public String getPolicyNo() {
+        return policyNo;
+    }
+
+    public String getInsuredName() {
+        return insuredName;
+    }
+
+    public BigDecimal getOffsetAmount() {
+        return offsetAmount;
     }
 } 

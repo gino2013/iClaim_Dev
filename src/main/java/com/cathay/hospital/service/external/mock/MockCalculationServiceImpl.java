@@ -8,10 +8,12 @@ import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.service.external.CalculationService;
 
+import java.math.BigDecimal;
+
 /**
  * 試算服務的 Mock 實作
  */
-@Service
+@Service("mockCalculationServiceImpl")
 @Profile("dev")  // 只在開發環境使用 mock
 public class MockCalculationServiceImpl implements CalculationService {
     private static final Logger log = LoggerFactory.getLogger(MockCalculationServiceImpl.class);
@@ -20,8 +22,8 @@ public class MockCalculationServiceImpl implements CalculationService {
     public CalculationResult calculate(String caseNo, OffsetCaseRequest request) {
         log.info("Mock calculation for case: {}", caseNo);
         return CalculationResult.builder()
-                .calculatedAmount("1000")
-                .calReason("Mock calculation result")
+                .calculatedAmount(new BigDecimal("1000.00"))
+                .calculationReason("Mock calculation result")
                 .build();
     }
 } 

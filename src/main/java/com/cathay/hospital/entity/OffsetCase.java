@@ -2,6 +2,7 @@ package com.cathay.hospital.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * 抵繳案件實體類
@@ -66,7 +67,7 @@ public class OffsetCase {
     private String admissionNo;
     
     @Column(name = "ADMISSION_DATE")
-    private LocalDateTime admissionDate;
+    private LocalDate admissionDate;
     
     @Column(name = "SEND_DATE")
     private LocalDateTime sendDate;
@@ -89,55 +90,41 @@ public class OffsetCase {
     @Column(name = "UPDATE_TIME")
     private LocalDateTime updateTime;
 
-    // Getters and Setters
+    // Getters
     public String getCaseNo() { return caseNo; }
-    public void setCaseNo(String caseNo) { this.caseNo = caseNo; }
-    
     public LocalDateTime getCaseDate() { return caseDate; }
-    public void setCaseDate(LocalDateTime caseDate) { this.caseDate = caseDate; }
-    
     public String getCaseType() { return caseType; }
-    public void setCaseType(String caseType) { this.caseType = caseType; }
-    
     public String getOrganizationId() { return organizationId; }
-    public void setOrganizationId(String organizationId) { this.organizationId = organizationId; }
-    
     public String getCtTenantId() { return ctTenantId; }
-    public void setCtTenantId(String ctTenantId) { this.ctTenantId = ctTenantId; }
-    
-    public String getStatusCode() { return statusCode; }
-    public void setStatusCode(String statusCode) { this.statusCode = statusCode; }
-    
-    public String getAdmissionNo() { return admissionNo; }
-    public void setAdmissionNo(String admissionNo) { this.admissionNo = admissionNo; }
-    
     public String getInsuredName() { return insuredName; }
-    public void setInsuredName(String insuredName) { this.insuredName = insuredName; }
-    
     public String getInsuredId() { return insuredId; }
-    public void setInsuredId(String insuredId) { this.insuredId = insuredId; }
-    
     public String getCharNo() { return charNo; }
-    public void setCharNo(String charNo) { this.charNo = charNo; }
-    
-    public LocalDateTime getAdmissionDate() { return admissionDate; }
-    public void setAdmissionDate(LocalDateTime admissionDate) { this.admissionDate = admissionDate; }
-    
+    public String getAdmissionNo() { return admissionNo; }
+    public LocalDate getAdmissionDate() { return admissionDate; }
     public LocalDateTime getSendDate() { return sendDate; }
-    public void setSendDate(LocalDateTime sendDate) { this.sendDate = sendDate; }
-    
     public String getCalculatedAmount() { return calculatedAmount; }
-    public void setCalculatedAmount(String calculatedAmount) { this.calculatedAmount = calculatedAmount; }
-    
     public String getAuthAgreement() { return authAgreement; }
-    public void setAuthAgreement(String authAgreement) { this.authAgreement = authAgreement; }
-    
+    public String getStatusCode() { return statusCode; }
     public String getUpdateId() { return updateId; }
-    public void setUpdateId(String updateId) { this.updateId = updateId; }
-    
     public String getUpdateTenant() { return updateTenant; }
-    public void setUpdateTenant(String updateTenant) { this.updateTenant = updateTenant; }
-    
     public LocalDateTime getUpdateTime() { return updateTime; }
+
+    // Setters
+    public void setCaseNo(String caseNo) { this.caseNo = caseNo; }
+    public void setCaseDate(LocalDateTime caseDate) { this.caseDate = caseDate; }
+    public void setCaseType(String caseType) { this.caseType = caseType; }
+    public void setOrganizationId(String organizationId) { this.organizationId = organizationId; }
+    public void setCtTenantId(String ctTenantId) { this.ctTenantId = ctTenantId; }
+    public void setInsuredName(String insuredName) { this.insuredName = insuredName; }
+    public void setInsuredId(String insuredId) { this.insuredId = insuredId; }
+    public void setCharNo(String charNo) { this.charNo = charNo; }
+    public void setAdmissionNo(String admissionNo) { this.admissionNo = admissionNo; }
+    public void setAdmissionDate(LocalDate admissionDate) { this.admissionDate = admissionDate; }
+    public void setSendDate(LocalDateTime sendDate) { this.sendDate = sendDate; }
+    public void setCalculatedAmount(String calculatedAmount) { this.calculatedAmount = calculatedAmount; }
+    public void setAuthAgreement(String authAgreement) { this.authAgreement = authAgreement; }
+    public void setStatusCode(String statusCode) { this.statusCode = statusCode; }
+    public void setUpdateId(String updateId) { this.updateId = updateId; }
+    public void setUpdateTenant(String updateTenant) { this.updateTenant = updateTenant; }
     public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
 } 

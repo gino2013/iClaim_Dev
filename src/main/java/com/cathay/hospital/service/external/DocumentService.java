@@ -7,5 +7,5 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface DocumentService {
-    void uploadDocument(String caseNo, byte[] content);
+    String uploadDocument(String document);
 } 

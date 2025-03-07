@@ -18,20 +18,22 @@ package com.cathay.hospital.constant;
  * @version 1.0
  * @since 2025-03-06
  */
-public class StatusCode {
-    /** 案件結案失敗，允許重送 */
-    public static final String CASE_CLOSED_FAIL = "CCF";
+public enum StatusCode {
+    INIT("0"),      // 初始状态
+    ACTIVE("1"),    // 有效
+    INVALID("9"),    // 无效
+    CCF("CCF"),      // 案件結案失敗，允許重送
+    HT("HT"),        // 暫存狀態，視為新案件
+    CCS("CCS"),      // 案件結案成功
+    IP("IP");        // 處理中
     
-    /** 暫存狀態，視為新案件 */
-    public static final String HOLD_TEMP = "HT";
+    private final String code;
     
-    /** 案件結案成功 */
-    public static final String CASE_CLOSED_SUCCESS = "CCS";
+    StatusCode(String code) {
+        this.code = code;
+    }
     
-    /** 處理中 */
-    public static final String IN_PROCESS = "IP";
-    
-    private StatusCode() {
-        throw new IllegalStateException("Constant class");
+    public String getCode() {
+        return code;
     }
 } 

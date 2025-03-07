@@ -1,5 +1,7 @@
 package com.cathay.hospital.model;
 
+import java.math.BigDecimal;
+
 /**
  * 試算結果模型類
  *
@@ -9,8 +11,8 @@ package com.cathay.hospital.model;
  * <p>使用範例:
  * <pre>
  * CalculationResult result = CalculationResult.builder()
- *     .calculatedAmount("1000")
- *     .calReason("正常試算")
+ *     .calculatedAmount(new BigDecimal("1000"))
+ *     .calculationReason("正常試算")
  *     .build();
  * </pre>
  *
@@ -20,40 +22,45 @@ package com.cathay.hospital.model;
  */
 public class CalculationResult {
     /** 試算金額 */
-    private String calculatedAmount;
+    private BigDecimal calculatedAmount;
     
     /** 試算原因 */
-    private String calReason;
-
+    private String calculationReason;
+    
     private CalculationResult(Builder builder) {
         this.calculatedAmount = builder.calculatedAmount;
-        this.calReason = builder.calReason;
+        this.calculationReason = builder.calculationReason;
     }
-
+    
     public static Builder builder() {
         return new Builder();
     }
-
+    
     public static class Builder {
-        private String calculatedAmount;
-        private String calReason;
-
-        public Builder calculatedAmount(String calculatedAmount) {
+        private BigDecimal calculatedAmount;
+        private String calculationReason;
+        
+        public Builder calculatedAmount(BigDecimal calculatedAmount) {
             this.calculatedAmount = calculatedAmount;
             return this;
         }
-
-        public Builder calReason(String calReason) {
-            this.calReason = calReason;
+        
+        public Builder calculationReason(String calculationReason) {
+            this.calculationReason = calculationReason;
             return this;
         }
-
+        
         public CalculationResult build() {
             return new CalculationResult(this);
         }
     }
-
+    
     // Getters
-    public String getCalculatedAmount() { return calculatedAmount; }
-    public String getCalReason() { return calReason; }
+    public BigDecimal getCalculatedAmount() {
+        return calculatedAmount;
+    }
+    
+    public String getCalculationReason() {
+        return calculationReason;
+    }
 } 

@@ -39,6 +39,10 @@ public class ErrorCode {
     public static final String EXTERNAL_API_ERROR = "A009";// 呼叫外部API發生錯誤
     public static final String DB_ERROR = "9999";          // 發生資料庫錯誤
     
+    public static final String MISSING_REQUIRED_FIELDS = "0001";
+    public static final String INVALID_DOCUMENT_FORMAT = "0002";
+    public static final String SYSTEM_ERROR = "9999";
+    
     private ErrorCode() {
         throw new IllegalStateException("Constant class");
     }

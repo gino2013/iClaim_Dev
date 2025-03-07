@@ -8,20 +8,32 @@ import com.cathay.hospital.model.CaseInfo;
 import com.cathay.hospital.model.CalculationResult;
 import com.cathay.hospital.model.OffsetCaseRequest;
 import com.cathay.hospital.repository.OffsetCaseRepository;
-import com.cathay.hospital.repository.OffsetAllowlistRepository;
 import com.cathay.hospital.service.external.CalculationService;
-import com.cathay.hospital.service.external.DocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import jakarta.annotation.PostConstruct;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * 抵繳案件服務類
@@ -54,14 +66,13 @@ import java.util.Optional;
  * @since 2025-03-06
  */
 @Service
+@Transactional
 public class OffsetCaseService {
     private static final Logger log = LoggerFactory.getLogger(OffsetCaseService.class);
 
     @Autowired
+    @Qualifier("calculationServiceImpl")
     private CalculationService calculationService;
-    
-    @Autowired
-    private DocumentService documentService;
     
     @Value("${app.environment}")
     private String environment;
@@ -70,7 +81,17 @@ public class OffsetCaseService {
     private OffsetCaseRepository offsetCaseRepository;
     
     @Autowired
-    private OffsetAllowlistRepository allowlistRepository;
+    private JdbcTemplate jdbcTemplate;
+
+    @PostConstruct
+    public void testConnection() {
+        try {
+            String result = jdbcTemplate.queryForObject("SELECT current_database()", String.class);
+            log.info("Successfully connected to database: {}", result);
+        } catch (Exception e) {
+            log.error("Failed to connect to database", e);
+        }
+    }
 
     /**
      * 處理抵繳案件的主要方法
@@ -80,104 +101,98 @@ public class OffsetCaseService {
      * @return 試算結果
      * @throws BusinessException 當業務邏輯檢核失敗時
      */
+    @Transactional
     public CalculationResult processCase(Map<String, String> headers, OffsetCaseRequest request) {
-        log.info("Processing case with headers: {} and request: {}", headers, request);
-        
-        // 1. 檢查必要欄位
-        validateRequiredFields(headers, request);
-
-        // 2. 取得國泰人壽租戶代碼
-        String tenantId = headers.entrySet().stream()
-                .filter(entry -> entry.getKey().equalsIgnoreCase("TENANT_ID"))
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .orElseThrow(() -> new BusinessException("0001", "輸入欄位缺漏或格式有誤"));
+        try {
+            // 检查数据库状态
+            checkDatabaseStatus();
             
-        String ctTenantId = getCtTenantId(tenantId);
-        log.info("Resolved ctTenantId: {}", ctTenantId);
-        
-        // 3. 檢查案件是否存在
-        CaseInfo caseInfo = checkExistingCase(request.getAdmissionNo(), ctTenantId);
-        
-        // 4. 檢查抵繳名單
-        if (!caseInfo.isResend()) {
-            checkAllowlist(request.getInsuredId(), ctTenantId);
-        }
+            // 1. 检查必要字段
+            validateRequest(request);
 
-        // 呼叫試算服務
-        CalculationResult result = calculationService.calculate(caseInfo.getCaseNo(), request);
-        
-        // 上傳文件
-        documentService.uploadDocument(caseInfo.getCaseNo(), request.getDocument());
-        
-        return result;
+            // 2. 获取租户代码
+            String tenantId = headers.get("TENANT_ID");
+            String ctTenantId = getTenantId(tenantId);
+
+            // 3. 检查案件是否存在
+            checkCaseExists(request.getAdmissionNo());
+
+            // 4. 检查抵缴名单
+            checkAllowlist(ctTenantId, request.getInsuredId());
+
+            // 5. 生成案件编号
+            String caseNo = generateCaseNo();
+
+            // 6. 处理文档
+            if (request.getDocument() != null) {
+                try {
+                    byte[] decodedBytes = Base64.getDecoder().decode(request.getDocument());
+                    String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
+                    log.debug("Decoded document: {}", decodedString);
+                } catch (IllegalArgumentException e) {
+                    log.error("Failed to decode document", e);
+                    throw new BusinessException(ErrorCode.INVALID_DOCUMENT_FORMAT, "文档格式无效");
+                }
+            }
+
+            // 7. 保存案件
+            saveCase(caseNo, ctTenantId, request);
+
+            // 8. 调用试算服务
+            return calculationService.calculate(caseNo, request);
+
+        } catch (BusinessException e) {
+            log.error("Business error occurred while processing case", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error occurred while processing case", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "系统错误", e);
+        }
     }
 
-    /**
-     * 驗證請求中的必要欄位
-     *
-     * <p>檢查 HTTP 請求標頭和請求體中的必要欄位是否存在且有值。
-     * 必要的標頭欄位包括：
-     * <ul>
-     *   <li>TXNSEQ - 交易序號</li>
-     *   <li>TENANT_ID - 租戶代碼</li>
-     * </ul>
-     *
-     * @param headers HTTP 請求標頭
-     * @param request 案件請求資料
-     * @throws BusinessException 當有必要欄位缺漏時，拋出代碼為 0001 的異常
-     */
-    private void validateRequiredFields(Map<String, String> headers, OffsetCaseRequest request) {
+    private void validateRequest(OffsetCaseRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.MISSING_REQUIRED_FIELDS, "必填字段缺失");
+        }
+
+        // 添加详细日志
+        log.info("Validating request: {}", request);
+        log.info("organizationId: [{}]", request.getOrganizationId());
+        log.info("insuredName: [{}]", request.getInsuredName());
+        log.info("insuredId: [{}]", request.getInsuredId());
+        log.info("charNo: [{}]", request.getCharNo());
+        log.info("admissionNo: [{}]", request.getAdmissionNo());
+        log.info("admissionDate: [{}]", request.getAdmissionDate());
+        log.info("updateId: [{}]", request.getUpdateId());
+
         List<String> missingFields = new ArrayList<>();
-        
-        // 檢查 headers (不區分大小寫)
-        boolean hasTxnseq = headers.keySet().stream()
-                .anyMatch(key -> key.equalsIgnoreCase("TXNSEQ"));
-        boolean hasTenantId = headers.keySet().stream()
-                .anyMatch(key -> key.equalsIgnoreCase("TENANT_ID"));
-        
-        if (!hasTxnseq) {
-            log.error("Missing TXNSEQ header");
-            missingFields.add("TXNSEQ");
-        }
-        if (!hasTenantId) {
-            log.error("Missing TENANT_ID header");
-            missingFields.add("TENANT_ID");
-        }
-        
-        // 檢查 request body
+
         if (!StringUtils.hasText(request.getOrganizationId())) {
-            log.error("Missing organizationId");
-            missingFields.add("ORGANIZATION_ID");
+            missingFields.add("organizationId");
         }
         if (!StringUtils.hasText(request.getInsuredName())) {
-            log.error("Missing insuredName");
-            missingFields.add("INSURED_NAME");
+            missingFields.add("insuredName");
         }
         if (!StringUtils.hasText(request.getInsuredId())) {
-            log.error("Missing insuredId");
-            missingFields.add("INSURED_ID");
+            missingFields.add("insuredId");
         }
         if (!StringUtils.hasText(request.getCharNo())) {
-            log.error("Missing charNo");
-            missingFields.add("CHAR_NO");
+            missingFields.add("charNo");
         }
         if (!StringUtils.hasText(request.getAdmissionNo())) {
-            log.error("Missing admissionNo");
-            missingFields.add("ADMISSION_NO");
+            missingFields.add("admissionNo");
         }
         if (!StringUtils.hasText(request.getAdmissionDate())) {
-            log.error("Missing admissionDate");
-            missingFields.add("ADMISSION_DATE");
+            missingFields.add("admissionDate");
         }
         if (!StringUtils.hasText(request.getUpdateId())) {
-            log.error("Missing updateId");
-            missingFields.add("UPDATE_ID");
+            missingFields.add("updateId");
         }
 
         if (!missingFields.isEmpty()) {
-            log.error("Missing fields: {}", missingFields);
-            throw new BusinessException("0001", "輸入欄位缺漏或格式有誤");
+            log.error("Missing required fields: {}", missingFields);
+            throw new BusinessException(ErrorCode.MISSING_REQUIRED_FIELDS, 
+                String.format("必填字段缺失: %s", String.join(", ", missingFields)));
         }
     }
 
@@ -203,7 +218,7 @@ public class OffsetCaseService {
      * @return 國泰人壽租戶代碼
      * @throws BusinessException 當環境設定不正確時，拋出代碼為 A001 的異常
      */
-    private String getCtTenantId(String tenantId) {
+    private String getTenantId(String tenantId) {
         String currentEnv = getEnvironment();
         if (currentEnv == null) {
             log.error("Environment is null");
@@ -228,59 +243,6 @@ public class OffsetCaseService {
     }
 
     /**
-     * 檢查案件是否存在並判斷其狀態
-     *
-     * <p>根據住院號和租戶代碼查詢案件，並根據案件狀態判斷是否可以新增或重送：
-     * <ul>
-     *   <li>無案件 - 允許新增</li>
-     *   <li>CCF 狀態 - 允許重送</li>
-     *   <li>HT 狀態 - 允許新增</li>
-     *   <li>其他狀態 - 不允許新增</li>
-     * </ul>
-     *
-     * @param admissionNo 住院號
-     * @param ctTenantId 國泰人壽租戶代碼
-     * @return 案件資訊，包含案件編號和重送標記
-     * @throws BusinessException 當案件已存在且不允許新增時
-     */
-    private CaseInfo checkExistingCase(String admissionNo, String ctTenantId) {
-        Optional<OffsetCase> existingCase = offsetCaseRepository
-            .findLatestByAdmissionNoAndCtTenantId(admissionNo, ctTenantId);
-
-        if (existingCase.isEmpty()) {
-            return CaseInfo.builder()
-                    .caseNo(null)
-                    .resend(false)
-                    .build();
-        }
-
-        OffsetCase latestCase = existingCase.get();
-        String statusCode = latestCase.getStatusCode();
-
-        // 若狀態為CCF,為案件重送
-        if (StatusCode.CASE_CLOSED_FAIL.equals(statusCode)) {
-            return CaseInfo.builder()
-                    .caseNo(latestCase.getCaseNo())
-                    .resend(true)
-                    .build();
-        }
-        
-        // 若狀態為HT,同新增案件
-        if (StatusCode.HOLD_TEMP.equals(statusCode)) {
-            return CaseInfo.builder()
-                    .caseNo(null)
-                    .resend(false)  
-                    .build();
-        }
-
-        // 其他狀態不允許新增
-        throw new BusinessException(
-            ErrorCode.DUPLICATE_DATA,
-            "資料重複無法新增"
-        );
-    }
-
-    /**
      * 檢查被保險人是否在抵繳名單中
      *
      * <p>根據被保險人身分證字號和租戶代碼檢查是否在抵繳名單中。
@@ -290,13 +252,501 @@ public class OffsetCaseService {
      * @param ctTenantId 國泰人壽租戶代碼
      * @throws BusinessException 當被保險人不在抵繳名單中時，拋出代碼為 E001 的異常
      */
-    private void checkAllowlist(String insuredId, String ctTenantId) {
-        boolean exists = allowlistRepository.existsByInsuredIdAndCtTenantId(insuredId, ctTenantId);
-        if (!exists) {
+    private void checkAllowlist(String ctTenantId, String insuredId) {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM public.offset_allowlist 
+            WHERE insured_id = ? 
+            AND ct_tenant_id = ?
+            AND update_time = (
+                SELECT MAX(update_time) 
+                FROM public.offset_allowlist 
+                WHERE insured_id = ? 
+                AND ct_tenant_id = ?
+            )
+        """;
+
+        Integer count = jdbcTemplate.queryForObject(
+            sql, 
+            Integer.class,
+            insuredId, ctTenantId, insuredId, ctTenantId
+        );
+
+        if (count == null || count == 0) {
+            log.error("Insured {} from tenant {} not in allowlist", insuredId, ctTenantId);
             throw new BusinessException(
                 ErrorCode.NOT_IN_ALLOWLIST,
                 "資料不存在無法修改"
             );
+        }
+
+        log.info("Allowlist check passed for insured {} from tenant {}", insuredId, ctTenantId);
+    }
+
+    @Transactional
+    public Map<String, Object> addDocCal(Map<String, Object> input) {
+        try {
+            // 1.检查必要字段
+            validateRequiredFieldsForAddDocCal(input);
+
+            // 2. DB资料检查
+            String xCtId = getTenantIdForEnv();
+            
+            // 2.1 检查抵繳名单
+            String insuredId = input.get("INSURED_ID").toString();
+            String tenantId = input.get("TENANT_ID").toString();
+            checkAllowlist(tenantId, insuredId);
+
+            // 2.2 检查案件是否已存在
+            String sql = "SELECT case_no, status_code, update_time FROM xDbSchema.offset_case " +
+                        "WHERE admission_no = ? AND ct_tenant_id = ? " +
+                        "ORDER BY update_time DESC LIMIT 1";
+            
+            List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, 
+                input.get("ADMISSION_NO"), xCtId);
+
+            if (!results.isEmpty()) {
+                Map<String, Object> existingCase = results.get(0);
+                String statusCode = (String) existingCase.get("status_code");
+                
+                if ("CCF".equals(statusCode)) {
+                    throw new RuntimeException("0006:资料重复无法新增");
+                } else if ("HT".equals(statusCode)) {
+                    throw new RuntimeException("0006:资料重复无法新增");
+                } else {
+                    throw new RuntimeException("0006:资料重复无法新增");
+                }
+            }
+
+            // 2.3 产生传输文件次数
+            int xNum;
+            xNum = 1;
+
+            // 7.2 更新案件主档
+            sql = "INSERT INTO xDbSchema.offset_case (" +
+                  "case_no, case_date, case_type, organization_id, ct_tenant_id, " +
+                  "insured_name, insured_id, char_no, admission_no, admission_date, " +
+                  "send_date, calculated_amount, auth_agreement, status_code, " +
+                  "update_id, update_tenant, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            jdbcTemplate.update(sql,
+                input.get("case_no"),
+                LocalDate.now(),
+                "O",
+                input.get("ORGANIZATION_ID"),
+                xCtId,
+                input.get("INSURED_NAME"),
+                input.get("INSURED_ID"), 
+                input.get("CHAR_NO"),
+                input.get("ADMISSION_NO"),
+                input.get("ADMISSION_DATE"),
+                Timestamp.valueOf(LocalDateTime.now()),
+                0, // xCalAmt 待计算
+                input.get("AUTH_AGREEMENT"),
+                "CCF",
+                input.get("UPDATE_ID"),
+                input.get("TENANT_ID"),
+                Timestamp.valueOf(LocalDateTime.now())
+            );
+            
+            // 写入案件日志
+            insertCaseLog(input.get("case_no").toString(), "ADD");
+
+            // 处理文档
+            List<Map<String, String>> patternList = processDocuments(input);
+            
+            // 构建试算请求
+            OffsetCaseRequest request = new OffsetCaseRequest();
+            request.setDocuments(patternList);
+            // 设置其他必要字段...
+
+            // 调用试算服务
+            CalculationResult calculationResult = calculationService.calculate(
+                input.get("case_no").toString(),
+                request
+            );
+            
+            // 写入试算历程
+            insertCalculationHistory(
+                input.get("case_no").toString(), 
+                xNum, 
+                calculationResult.getCalculatedAmount(), 
+                calculationResult.getCalculationReason(),
+                input.get("UPDATE_ID").toString(), 
+                input.get("TENANT_ID").toString()
+            );
+
+            // 返回结果
+            return Map.of(
+                "RETURN_CODE", "0000",
+                "RETURN_DESC", "执行成功",
+                "RETURN_DATA", Map.of(
+                    "CALCULATED_AMOUNT", calculationResult.getCalculatedAmount(),
+                    "CAL_REASON", calculationResult.getCalculationReason()
+                )
+            );
+
+        } catch (Exception e) {
+            log.error("Error processing case", e);
+            return Map.of(
+                "RETURN_CODE", e.getMessage().split(":")[0],
+                "RETURN_DESC", e.getMessage().split(":")[1],
+                "RETURN_DATA", Map.of()
+            );
+        }
+    }
+
+    /**
+     * 检查案件新增必要字段
+     */
+    private void validateRequiredFieldsForAddDocCal(Map<String, Object> input) {
+        String[] requiredFields = {
+            "TXNSEQ", "TENANT_ID", "ORGANIZATION_ID", "INSURED_NAME",
+            "INSURED_ID", "CHAR_NO", "ADMISSION_NO", "ADMISSION_DATE", "UPDATE_ID"
+        };
+
+        List<String> missingFields = new ArrayList<>();
+        for (String field : requiredFields) {
+            if (input.get(field) == null || input.get(field).toString().trim().isEmpty()) {
+                missingFields.add(field);
+            }
+        }
+
+        if (!missingFields.isEmpty()) {
+            log.error("Missing required fields: {}", missingFields);
+            throw new RuntimeException("0001:输入栏位缺漏或格式有误");
+        }
+    }
+
+    /**
+     * 获取环境对应的国泰人寿租户代码
+     */
+    private String getTenantIdForEnv() {
+        String currentEnv = getEnvironment();
+        if (currentEnv == null) {
+            log.error("Environment is null");
+            throw new RuntimeException("A001:GIP查无资料");
+        }
+        
+        currentEnv = currentEnv.trim().toUpperCase();
+        log.info("Current environment: {}", currentEnv);
+        
+        switch (currentEnv) {
+            case "UT":
+                return "ct-03374707-ytzw8";
+            case "UAT":
+                return "ct-03374707-s7jbs";
+            default:
+                log.error("Invalid environment: {}", currentEnv);
+                throw new RuntimeException("A001:GIP查无资料");
+        }
+    }
+
+    /**
+     * 写入案件日志
+     */
+    private void insertCaseLog(String caseNo, String logType) {
+        String sql = "INSERT INTO xDbSchema.offset_case_log (" +
+            "log_id, log_type, log_time, case_no, case_date, case_type, " +
+            "organization_id, ct_tenant_id, insured_name, insured_id, " +
+            "char_no, admission_no, admission_date, status_code, " +
+            "calculated_amount, act_offset_amount, reject_reason, " +
+            "auth_agreement, offset_date, close_date, send_date, " +
+            "pay_date, update_id, update_tenant, update_time) " +
+            "SELECT nextval('xDbSchema.offset_case_log_seq'), ?, CURRENT_TIMESTAMP, " +
+            "case_no, case_date, case_type, organization_id, ct_tenant_id, " +
+            "insured_name, insured_id, char_no, admission_no, admission_date, " +
+            "status_code, calculated_amount, act_offset_amount, reject_reason, " +
+            "auth_agreement, offset_date, close_date, send_date, pay_date, " +
+            "update_id, update_tenant, update_time " +
+            "FROM xDbSchema.offset_case WHERE case_no = ?";
+
+        jdbcTemplate.update(sql, logType, caseNo);
+    }
+
+    /**
+     * 写入试算历程
+     */
+    private void insertCalculationHistory(String caseNo, int docTypeNum, BigDecimal calAmt, String calReason, String updateId, String tenantId) {
+        String sql = "INSERT INTO xDbSchema.offset_case_cal (" +
+            "case_no, doc_type_num, calculated_amount, cal_reason, " +
+            "update_id, update_tenant, update_time) " +
+            "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        jdbcTemplate.update(sql,
+            caseNo,
+            docTypeNum,
+            calAmt,
+            calReason,
+            updateId,
+            tenantId
+        );
+    }
+
+    /**
+     * 获取理赔模板设定
+     * @param caseType 案件类型
+     * @return 模板设定列表
+     */
+    private List<Map<String, Object>> getDocPatterns(String caseType) {
+        String sql = """
+            SELECT 
+                pattern_id,
+                pattern_name,
+                paper_seq,
+                required_flag,
+                status_code
+            FROM public.case_doc_pattern 
+            WHERE case_type = ?
+            AND status_code = '1'
+            ORDER BY pattern_id
+        """;
+
+        return jdbcTemplate.queryForList(sql, caseType);
+    }
+
+    /**
+     * 处理文档模板
+     * @param input 输入参数
+     * @return 处理后的文档列表
+     */
+    private List<Map<String, String>> processDocuments(Map<String, Object> input) {
+        // 1. 获取理赔模板设定
+        List<Map<String, Object>> patterns = getDocPatterns("O");  // O 表示抵繳案件
+        
+        // 2. 获取住院号
+        String admissionNo = input.get("ADMISSION_NO").toString();
+        
+        // 3. 获取所有必要文件的序号
+        List<String> requiredPaperSeqs = patterns.stream()
+            .filter(p -> "Y".equals(p.get("required_flag")))
+            .map(p -> p.get("paper_seq").toString())
+            .toList();
+            
+        // 4. 查询 FHIR bundle 序号
+        List<String> bundleSeqs = getBundleSeqs(admissionNo, requiredPaperSeqs);
+        if (bundleSeqs.isEmpty()) {
+            log.error("No FHIR bundles found for admission: {}", admissionNo);
+            throw new RuntimeException("0003:必要文件不完整");
+        }
+        
+        // 5. 查询 FHIR 资源路径
+        List<String> resourcePaths = getFhirPaths(bundleSeqs);
+        if (resourcePaths.isEmpty()) {
+            log.error("No FHIR resources found for bundles: {}", bundleSeqs);
+            throw new RuntimeException("0004:FHIR资源不存在");
+        }
+        
+        // 6. 构建返回的文档列表
+        List<Map<String, String>> documents = new ArrayList<>();
+        final int size = bundleSeqs.size();
+        for (int i = 0; i < size; i++) {
+            final int index = i;  // 创建一个 effectively final 的变量
+            Map<String, String> doc = new HashMap<>();
+            doc.put("xPaperSeq", requiredPaperSeqs.get(index));
+            doc.put("xBatchId", bundleSeqs.get(index));
+            doc.put("xPaperName", patterns.stream()
+                .filter(p -> p.get("paper_seq").toString().equals(requiredPaperSeqs.get(index)))
+                .findFirst()
+                .map(p -> p.get("pattern_name").toString())
+                .orElse(""));
+            doc.put("UPDATE_ID", input.get("UPDATE_ID").toString());
+            documents.add(doc);
+        }
+        
+        return documents;
+    }
+
+    /**
+     * 查询 FHIR bundle 序号
+     */
+    private List<String> getBundleSeqs(String admissionNo, List<String> paperSeqs) {
+        if (paperSeqs == null || paperSeqs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String sql = """
+            SELECT DISTINCT bundle_seq 
+            FROM public.fhir_server_bundle 
+            WHERE admission_no = ? 
+            AND paper_seq IN (%s)
+            AND status_code = '1'
+            ORDER BY bundle_seq
+        """;
+
+        String inClause = String.join(",", Collections.nCopies(paperSeqs.size(), "?"));
+        sql = String.format(sql, inClause);
+
+        List<Object> params = new ArrayList<>();
+        params.add(admissionNo);
+        params.addAll(paperSeqs);
+
+        return jdbcTemplate.queryForList(sql, String.class, params.toArray());
+    }
+
+    /**
+     * 查询 FHIR 资源路径
+     */
+    private List<String> getFhirPaths(List<String> bundleSeqs) {
+        if (bundleSeqs == null || bundleSeqs.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String sql = """
+            SELECT DISTINCT resource_path 
+            FROM public.fhir_server_resource 
+            WHERE bundle_seq IN (%s)
+            AND status_code = '1'
+            ORDER BY resource_path
+        """;
+
+        String inClause = String.join(",", Collections.nCopies(bundleSeqs.size(), "?"));
+        sql = String.format(sql, inClause);
+
+        return jdbcTemplate.queryForList(sql, String.class, bundleSeqs.toArray());
+    }
+
+    /**
+     * 检查案件是否存在
+     */
+    private void checkCaseExists(String admissionNo) {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM public.offset_case 
+            WHERE admission_no = ?
+        """;
+        
+        log.info("Checking if case exists for admission_no: {}", admissionNo);
+        
+        try {
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, admissionNo);
+            log.info("Found {} existing cases with admission_no: {}", count, admissionNo);
+            
+            if (count != null && count > 0) {
+                log.warn("Case already exists with admission_no: {}", admissionNo);
+                throw new BusinessException("0003", "案件已存在");
+            }
+        } catch (Exception e) {
+            log.error("Error checking case existence: {}", e.getMessage());
+            log.error("SQL: {}", sql);
+            log.error("Parameters: admission_no = {}", admissionNo);
+            throw e;
+        }
+    }
+
+    /**
+     * 生成案件编号
+     */
+    private String generateCaseNo() {
+        try {
+            // 先尝试直接获取序列值
+            String sql = "SELECT nextval('public.offset_case_seq')";
+            log.debug("Executing SQL: {}", sql);
+            
+            Long seqNo = jdbcTemplate.queryForObject(sql, Long.class);
+            log.info("Generated sequence number: {}", seqNo);
+            
+            if (seqNo == null) {
+                log.error("Failed to generate sequence number - returned null");
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "無法生成序列號");
+            }
+            
+            String caseNo = String.format("OC%010d", seqNo);
+            log.info("Generated case number: {}", caseNo);
+            return caseNo;
+            
+        } catch (Exception e) {
+            log.error("Error generating case number: {}", e.getMessage());
+            log.error("Error details:", e);
+            
+            // 检查序列是否存在
+            try {
+                String checkSql = """
+                    SELECT EXISTS (
+                        SELECT 1 
+                        FROM pg_sequences 
+                        WHERE schemaname = 'public' 
+                        AND sequencename = 'offset_case_seq'
+                    )
+                """;
+                Boolean exists = jdbcTemplate.queryForObject(checkSql, Boolean.class);
+                log.info("Sequence exists check result: {}", exists);
+                
+                if (Boolean.FALSE.equals(exists)) {
+                    log.error("Sequence 'offset_case_seq' does not exist");
+                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "序列不存在");
+                }
+            } catch (Exception checkError) {
+                log.error("Error checking sequence existence:", checkError);
+            }
+            
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成案件編號失敗");
+        }
+    }
+
+    /**
+     * 保存案件
+     */
+    private void saveCase(String caseNo, String ctTenantId, OffsetCaseRequest request) {
+        log.info("Saving new case - caseNo: {}, admissionNo: {}", caseNo, request.getAdmissionNo());
+        
+        try {
+            OffsetCase offsetCase = new OffsetCase();
+            offsetCase.setCaseNo(caseNo);
+            offsetCase.setCtTenantId(ctTenantId);
+            offsetCase.setAdmissionNo(request.getAdmissionNo());
+            offsetCase.setInsuredId(request.getInsuredId());
+            offsetCase.setInsuredName(request.getInsuredName());
+            offsetCase.setOrganizationId(request.getOrganizationId());
+            offsetCase.setCharNo(request.getCharNo());
+            offsetCase.setAdmissionDate(LocalDate.parse(request.getAdmissionDate()));
+            offsetCase.setUpdateId(request.getUpdateId());
+            offsetCase.setUpdateTime(LocalDateTime.now());
+            offsetCase.setStatusCode(StatusCode.INIT.getCode());
+            
+            offsetCaseRepository.save(offsetCase);
+            log.info("Successfully saved case: {}", caseNo);
+            
+            // 验证保存是否成功
+            boolean exists = offsetCaseRepository.existsById(caseNo);
+            log.info("Verified case exists in database: {}", exists);
+            
+        } catch (Exception e) {
+            log.error("Error saving case: {}", e.getMessage());
+            log.error("Case details - caseNo: {}, admissionNo: {}", caseNo, request.getAdmissionNo());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "保存案件失败", e);
+        }
+    }
+
+    /**
+     * 检查数据库状态
+     */
+    private void checkDatabaseStatus() {
+        try {
+            // 检查数据库连接
+            String dbName = jdbcTemplate.queryForObject("SELECT current_database()", String.class);
+            log.info("Connected to database: {}", dbName);
+            
+            // 检查表是否存在
+            String checkTableSql = """
+                SELECT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'offset_case'
+                )
+            """;
+            Boolean tableExists = jdbcTemplate.queryForObject(checkTableSql, Boolean.class);
+            log.info("offset_case table exists: {}", tableExists);
+            
+            // 检查表中的记录数
+            Integer recordCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM public.offset_case", Integer.class);
+            log.info("Total records in offset_case table: {}", recordCount);
+            
+        } catch (Exception e) {
+            log.error("Error checking database status: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "数据库检查失败", e);
         }
     }
 } 

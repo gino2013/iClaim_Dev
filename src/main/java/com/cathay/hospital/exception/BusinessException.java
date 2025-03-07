@@ -38,8 +38,18 @@ public class BusinessException extends RuntimeException {
         this.message = message;
     }
 
-    public String getCode() { return code; }
+    public BusinessException(String code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+        this.message = message;
+    }
+
+    public String getCode() {
+        return code;
+    }
     
     @Override
-    public String getMessage() { return message; }
+    public String getMessage() {
+        return message;
+    }
 } 
