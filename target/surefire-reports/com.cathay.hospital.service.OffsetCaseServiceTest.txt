@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.service.OffsetCaseServiceTest
 -------------------------------------------------------------------------------
-Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 1.275 s <<< FAILURE! -- in com.cathay.hospital.service.OffsetCaseServiceTest
-com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success -- Time elapsed: 1.250 s <<< ERROR!
+Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.722 s <<< FAILURE! -- in com.cathay.hospital.service.OffsetCaseServiceTest
+com.cathay.hospital.service.OffsetCaseServiceTest.processCase_Success -- Time elapsed: 0.701 s <<< ERROR!
 com.cathay.hospital.exception.BusinessException: 必填字段缺失: organizationId, charNo, admissionDate, updateId
 	at com.cathay.hospital.service.OffsetCaseService.validateRequest(OffsetCaseService.java:230)
 	at com.cathay.hospital.service.OffsetCaseService.processCase(OffsetCaseService.java:133)

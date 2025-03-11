@@ -7,7 +7,6 @@ com/cathay/hospital/service/external/CalculationService.class
 com/cathay/hospital/model/CalculationResult$Builder.class
 com/cathay/hospital/exception/BusinessException.class
 com/cathay/hospital/model/CaseInfo.class
-com/cathay/hospital/model/OffsetCaseRequest$OffsetCaseRequestBuilder.class
 com/cathay/hospital/service/external/mock/MockDocumentServiceImpl.class
 com/cathay/hospital/model/ApiResponse.class
 com/cathay/hospital/service/external/mock/MockCalculationServiceImpl.class
@@ -16,7 +15,6 @@ com/cathay/hospital/service/OffsetCaseService.class
 com/cathay/hospital/service/external/DocumentService.class
 com/cathay/hospital/model/CaseInfo$Builder.class
 com/cathay/hospital/config/DataInitializer.class
-com/cathay/hospital/model/OffsetCaseRequest$OffsetCaseRequestBuilderImpl.class
 com/cathay/hospital/model/OffsetCaseRequest.class
 com/cathay/hospital/repository/OffsetCaseRepository.class
 com/cathay/hospital/OffsetApplication.class

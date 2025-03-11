@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 Test set: com.cathay.hospital.controller.OffsetCaseControllerTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 6.388 s <<< FAILURE! -- in com.cathay.hospital.controller.OffsetCaseControllerTest
-com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest -- Time elapsed: 0.401 s <<< FAILURE!
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 4.036 s <<< FAILURE! -- in com.cathay.hospital.controller.OffsetCaseControllerTest
+com.cathay.hospital.controller.OffsetCaseControllerTest.testAddDocumentAndCalculate_ValidRequest -- Time elapsed: 0.329 s <<< FAILURE!
 java.lang.AssertionError: JSON path "$.returnData.calculatedAmount" expected:<1000.00> but was:<1000.0>
 	at org.springframework.test.util.AssertionErrors.fail(AssertionErrors.java:61)
 	at org.springframework.test.util.AssertionErrors.assertEquals(AssertionErrors.java:128)

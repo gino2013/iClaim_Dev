@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 /**
  * 試算服務的 Mock 實作
  */
-@Service("mockCalculationServiceImpl")
+@Service()
 @Profile("dev")  // 只在開發環境使用 mock
 public class MockCalculationServiceImpl implements CalculationService {
     private static final Logger log = LoggerFactory.getLogger(MockCalculationServiceImpl.class);
